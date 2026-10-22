@@ -8,6 +8,13 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
 <meta name="theme-color" content="#2b5f8a">
+<script>
+// 開けないときに原因が分かるよう、エラーを画面に出す
+window.onerror = function(msg, src, line){
+  var el = document.getElementById("loading");
+  if (el && !el.classList.contains("hidden")) el.innerHTML = "読み込みでエラーが出ました。この画面を写真に撮って管理者に送ってください。<br><small>" + String(msg).replace(/</g, "&lt;") + "<br>" + String(src || "").split("/").pop() + " " + (line || "") + "</small>";
+};
+</script>
 <script src="config.js"></script>
 <script src="bui.js"></script>
 <script src="history.js"></script>
@@ -29,7 +36,7 @@ header{position:sticky;top:0;z-index:20;background:var(--pri);color:#fff;padding
 .huser{display:flex;align-items:center;gap:6px;font-size:15px}
 .huser select{padding:4px 6px;border-radius:6px;border:0;background:#fff;color:var(--ink)}
 nav{display:flex;gap:2px;margin-top:8px;overflow-x:auto}
-nav button{flex:1;min-width:96px;border:0;background:#ffffff22;color:#fff;padding:10px 6px;border-radius:8px 8px 0 0;font-size:16px;white-space:nowrap}
+nav button{flex:1 0 auto;min-width:0;padding-left:14px!important;padding-right:14px!important;border:0;background:#ffffff22;color:#fff;padding:10px 6px;border-radius:8px 8px 0 0;font-size:16px;white-space:nowrap}
 nav button.on{background:var(--bg);color:var(--pri);font-weight:700}
 main{max-width:1100px;margin:0 auto;padding:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
@@ -137,6 +144,8 @@ tr.sel td{background:#fff7e0}
 .viewbanner{background:#fff3cd;color:#6b5100;text-align:center;padding:6px;font-size:14px}
 .loading{padding:40px;text-align:center;color:var(--sub)}
 @media (max-width:700px){
+  .htitle{font-size:17px}
+  nav button{font-size:15px}
   .form{grid-template-columns:1fr}
   .form>label{padding-top:2px}
   .grid2{grid-template-columns:1fr}
@@ -371,7 +380,7 @@ tr.sel td{background:#fff7e0}
 <script>
 (function(){
 "use strict";
-var APP_VER = "kakoubata-v4";
+var APP_VER = "kakoubata-v5";
 var CFG = window.APP_CONFIG || {};
 var PHOTOS = window.BUI_PHOTOS || {};
 var VIEW = /[?&]view\b/.test(location.search);
@@ -386,6 +395,7 @@ function pset(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){
 var idb = null;
 function idbOpen(){
   return new Promise(function(res){
+    setTimeout(res, 3000); // 端末によって返事がないことがあるので3秒で先へ進む
     try{
       var rq = indexedDB.open("kakoubata", 1);
       rq.onupgradeneeded = function(){ rq.result.createObjectStore("kv"); };
@@ -396,6 +406,7 @@ function idbOpen(){
 }
 function idbGet(k){
   return new Promise(function(res){
+    setTimeout(function(){ res(null); }, 4000);
     if (!idb) return res(pget("kb_" + k, null));
     try{ var rq = idb.transaction("kv").objectStore("kv").get(k); rq.onsuccess = function(){ res(rq.result || null); }; rq.onerror = function(){ res(null); }; }catch(e){ res(null); }
   });
@@ -1512,7 +1523,12 @@ window.__kb = {monthOf: monthOf, parseDate: parseDate, lotRows: lotRows};
 idbOpen().then(function(){ return idbGet("db"); }).then(function(saved){
   if (saved) { var e = EMPTY(); Object.keys(e).forEach(function(k){ if (saved[k] !== undefined) e[k] = saved[k]; }); e.master = Object.assign(EMPTY().master, saved.master || {}); DB = e; }
   window.__kb.DB = function(){ return DB; };
-  loadHistory();
+  try { loadHistory(); } catch (e) { HIST = []; }
+  var missing = [];
+  if (!window.APP_CONFIG) missing.push("config.js");
+  if (!window.BUI_PHOTOS) missing.push("bui.js");
+  if (!window.KB_HISTORY) missing.push("history.js");
+  if (missing.length) setTimeout(function(){ toast("読み込めないファイルがあります：" + missing.join("・") + "（GitHubに置いてあるか確認）", 6000); }, 800);
   var us = CFG.users || [];
   $("user").innerHTML = '<option value="">選ぶ</option>' + us.map(function(u){ return "<option>" + esc(u) + "</option>"; }).join("");
   $("user").value = pget(PREF.user, "");

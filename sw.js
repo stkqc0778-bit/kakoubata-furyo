@@ -1,11 +1,11 @@
 // 加工畑不良一覧表 Service Worker
 // VERSION を変えると各端末が新しい版に切り替わります
-const VERSION = "kakoubata-v4";
+const VERSION = "kakoubata-v5";
 const FILES = ["./", "./index.html", "./config.js", "./bui.js", "./history.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 const CDN = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES).then(() => c.add(CDN).catch(() => {}))).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then(c => Promise.all(FILES.concat([CDN]).map(f => c.add(f).catch(() => {})))).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim()));
