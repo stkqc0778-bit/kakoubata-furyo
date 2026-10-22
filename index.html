@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#2b5f8a">
 <script src="config.js"></script>
 <script src="bui.js"></script>
+<script src="history.js"></script>
 <style>
 :root{
   --bg:#f3f5f8; --card:#fff; --ink:#1d2733; --sub:#5b6878; --line:#d5dbe3;
@@ -49,6 +50,19 @@ h3{font-size:16px;margin:16px 0 8px}
 .chip{border:1px solid var(--line);background:#fff;border-radius:16px;padding:5px 11px;font-size:15px}
 .chip.lot{font-variant-numeric:tabular-nums}
 .chip.photo{border-color:var(--pri);color:var(--pri);font-weight:700}
+.chip.on{background:var(--pri);border-color:var(--pri);color:#fff;font-weight:700}
+.chip.more{border-style:dashed;color:var(--sub)}
+body.sel .chips{gap:8px}
+body.sel .chip{padding:10px 16px;font-size:17px;border-radius:10px;min-width:64px}
+body.sel .chips.hin .chip{min-width:150px;text-align:left}
+.chip small{display:block;font-size:12px;color:var(--sub);font-weight:400}
+.chip.on small{color:#fffc}
+.kgroup{font-size:13px;color:var(--sub);width:100%;margin-top:4px}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.pad button{padding:16px 0;font-size:24px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.pad button.ok{background:var(--pri);color:#fff;font-weight:700;border-color:var(--pri)}
+.padval{font-size:30px;text-align:right;padding:10px 14px;border:2px solid var(--pri);border-radius:10px;min-height:58px;letter-spacing:2px}
+input[readonly]{background:#fafbfc;cursor:pointer}
 .sug{position:absolute;left:0;right:0;top:48px;z-index:30;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 16px #0002;max-height:320px;overflow:auto}
 .sug div{padding:9px 12px;border-bottom:1px solid #eef1f4}
 .sug div.on{background:var(--pri2)}
@@ -157,7 +171,7 @@ tr.sel td{background:#fff7e0}
       <div class="fld">
         <div class="row">
           <button class="sbtn" type="button" id="dPrev" tabindex="-1">◀ 前日</button>
-          <input type="text" id="f-date" data-kb autocomplete="off" placeholder="例）2026/10/22 または 1022">
+          <input type="text" id="f-date" data-kb data-pad autocomplete="off" placeholder="例）2026/10/22 または 1022">
           <button class="sbtn" type="button" id="dToday" tabindex="-1">今日</button>
         </div>
         <div class="info" id="i-date"></div>
@@ -168,7 +182,7 @@ tr.sel td{background:#fff7e0}
         <input type="text" id="f-hinban" data-kb autocomplete="off" placeholder="例）2364H・2245（一部を打つと候補が出ます）">
         <div class="sug hidden" id="s-hinban"></div>
         <div class="info" id="i-hinban"></div>
-        <div class="chips" id="c-hinban"></div>
+        <div class="chips hin" id="c-hinban"></div>
       </div>
 
       <label for="f-naiyo">不良内容<span class="req">必須</span></label>
@@ -206,7 +220,7 @@ tr.sel td{background:#fff7e0}
       <label for="f-lot">鋳造ロット<span class="req">必須</span></label>
       <div class="fld">
         <div class="row">
-          <input type="text" id="f-lot" data-kb autocomplete="off" placeholder="例）261014">
+          <input type="text" id="f-lot" data-kb data-pad autocomplete="off" placeholder="例）261014">
           <button class="sbtn" type="button" id="lotUnknown" tabindex="-1">不明</button>
         </div>
         <div class="chips" id="c-lot"></div>
@@ -217,10 +231,11 @@ tr.sel td{background:#fff7e0}
       <div class="fld">
         <div class="row qty-row">
           <button class="sbtn" type="button" id="qMinus" tabindex="-1">－</button>
-          <input type="text" id="f-qty" data-kb data-num autocomplete="off" value="1">
+          <input type="text" id="f-qty" data-kb data-num data-pad autocomplete="off" value="1">
           <button class="sbtn" type="button" id="qPlus" tabindex="-1">＋</button>
           <span class="muted" id="i-kingaku"></span>
         </div>
+        <div class="chips" id="c-qty"></div>
       </div>
 
       <label for="f-biko">備考</label>
@@ -233,6 +248,7 @@ tr.sel td{background:#fff7e0}
       <button class="big sub" id="btnClear" tabindex="-1">入力を消す</button>
       <button class="big danger hidden" id="btnDelete" tabindex="-1">削除</button>
     </div>
+    <div class="kbhint" id="selhint">ボタンを押して選びます。ボタンにないときは欄を押して直接入力できます。</div>
     <div class="kbhint" id="kbhint">外付けキーボード：Enter で次の項目へ。候補は ↑↓ で選んで Enter（空欄で ↓ を押すと一覧）。加工面／素材面・状態は数字キー。最後に Enter で保存。</div>
   </div>
 
@@ -248,11 +264,11 @@ tr.sel td{background:#fff7e0}
     <h2>生産数（造型数）の入力</h2>
     <div class="form">
       <label for="p-hinban">品番</label>
-      <div class="fld"><input type="text" id="p-hinban" data-kb autocomplete="off" placeholder="品番"><div class="sug hidden" id="s-phinban"></div><div class="info" id="i-phinban"></div></div>
+      <div class="fld"><input type="text" id="p-hinban" data-kb autocomplete="off" placeholder="品番（下のボタンから選ぶ）"><div class="sug hidden" id="s-phinban"></div><div class="info" id="i-phinban"></div><div class="chips hin" id="c-phinban"></div></div>
       <label for="p-lot">鋳造ロット</label>
-      <div class="fld"><input type="text" id="p-lot" data-kb autocomplete="off" placeholder="例）261020"><div class="info" id="i-plot"></div></div>
+      <div class="fld"><input type="text" id="p-lot" data-kb data-pad autocomplete="off" placeholder="例）261020"><div class="info" id="i-plot"></div></div>
       <label for="p-seisan">生産数</label>
-      <div class="fld"><input type="text" id="p-seisan" data-kb data-num autocomplete="off" placeholder="例）2000"></div>
+      <div class="fld"><input type="text" id="p-seisan" data-kb data-num data-pad autocomplete="off" placeholder="例）2000"></div>
     </div>
     <div class="actions"><button class="big" id="btnLot">生産数を保存</button><span class="muted">同じ品番・ロットを入れると上書きします</span></div>
   </div>
@@ -328,7 +344,7 @@ tr.sel td{background:#fff7e0}
   <div class="card noview">
     <h2>入力のしかた</h2>
     <div class="setrow"><span class="l">画面のキーボード</span>
-      <label class="switch"><input type="checkbox" id="set-kb"> 外付けキーボードで入力する（画面にキーボードを出さない）</label></div>
+      <label class="switch"><input type="checkbox" id="set-kb"> 外付けキーボードで入力する（ふだんはボタンで選ぶ選択式。チェックすると画面にキーボードを出さず、Enterで次へ進む入力になります）</label></div>
   </div>
   <div class="card noview">
     <h2>マスター（品番・不良内容・部位・生産数）</h2>
@@ -355,7 +371,7 @@ tr.sel td{background:#fff7e0}
 <script>
 (function(){
 "use strict";
-var APP_VER = "kakoubata-v2";
+var APP_VER = "kakoubata-v4";
 var CFG = window.APP_CONFIG || {};
 var PHOTOS = window.BUI_PHOTOS || {};
 var VIEW = /[?&]view\b/.test(location.search);
@@ -391,7 +407,8 @@ function idbSet(k, v){
 var EMPTY = function(){ return {recs: {}, lots: {}, out: [], lotOut: [], confs: {}, confOut: [], master: {hinban: [], furyo: [], bui: [], at: {}}, since: "", lastSync: ""}; };
 var DB = EMPTY();
 var saveT = null;
-function persist(){ clearTimeout(saveT); saveT = setTimeout(function(){ idbSet("db", DB); }, 50); }
+var recVer = 0;
+function persist(){ recVer++; clearTimeout(saveT); saveT = setTimeout(function(){ idbSet("db", DB); }, 50); }
 
 // ---------------------------------------------------------------- 小道具
 var $ = function(id){ return document.getElementById(id); };
@@ -447,11 +464,34 @@ function fillMonthSelect(sel, n, extra){
   if (v && sel.querySelector('option[value="' + v + '"]')) sel.value = v; else sel.value = monthOf(today());
 }
 
+// これまでのExcelの記録（history.js）。見るだけで、直せない。ロットの不良数には入れない（生産数の「過去不良数」に入っているため）
+var HIST = [];
+function loadHistory(){
+  var h = window.KB_HISTORY; if (!h) return;
+  var J = h.jotai, M = ["", "加工面", "素材面"];
+  HIST = h.rows.map(function(r, i){
+    var d = String(r[0]), date = d.slice(0,4) + "/" + d.slice(4,6) + "/" + d.slice(6,8), hb = h.hin[r[1]];
+    return {id: "h" + i, h: 1, date: date, month: monthOf(date), hinban: hb, naiyo: h.naiyo[r[2]], bui: h.bui[r[3]], men: M[r[4]], jotai: J[r[5]], lot: r[6], qty: r[7], user: h.user[r[8]], biko: "", createdAt: ""};
+  });
+}
+var recCache = {};
 function allRecs(includeDel){
-  return Object.keys(DB.recs).map(function(k){ return DB.recs[k]; })
+  var key = includeDel ? "d" : "n";
+  if (recCache[key] && recCache[key].ver === recVer) return recCache[key].list;
+  var list = Object.keys(DB.recs).map(function(k){ return DB.recs[k]; })
     .filter(function(r){ return includeDel || !r.deleted; })
     .sort(function(a, b){ return a.date === b.date ? (a.createdAt < b.createdAt ? -1 : 1) : (a.date < b.date ? -1 : 1); });
+  if (HIST.length) { // 過去の記録（日付順に並んでいる）と合わせる
+    var out = [], i = 0, j = 0;
+    while (i < HIST.length || j < list.length) {
+      if (j >= list.length || (i < HIST.length && HIST[i].date <= list[j].date)) out.push(HIST[i++]); else out.push(list[j++]);
+    }
+    list = out;
+  }
+  recCache[key] = {ver: recVer, list: list};
+  return list;
 }
+function appRecs(){ return allRecs().filter(function(r){ return !r.h; }); }
 function H(h){ return String(h || "").trim().toUpperCase(); }
 function findHinban(h){
   h = H(h);
@@ -474,7 +514,7 @@ function calcTanka(hinban, jotai){
 function lotId(h, lot){ return H(h) + "|" + String(lot).trim(); }
 function appFuryo(){ // 品番|ロット → アプリで入れた不良数
   var s = {};
-  allRecs().forEach(function(r){ var k = lotId(r.hinban, r.lot); s[k] = (s[k] || 0) + Number(r.qty || 0); });
+  allRecs().forEach(function(r){ if (r.h) return; var k = lotId(r.hinban, r.lot); s[k] = (s[k] || 0) + Number(r.qty || 0); });
   return s;
 }
 function lotRows(){ // 生産数の表とアプリの記録を合わせる
@@ -504,11 +544,11 @@ function showTab(t){
   document.querySelectorAll("#tabs button").forEach(function(b){ b.classList.toggle("on", b.dataset.tab === t); });
   ["input","rate","list","sum","set"].forEach(function(n){ $("tab-" + n).classList.toggle("hidden", n !== t); });
   render();
-  if (t === "input") setTimeout(function(){ $("f-hinban").focus(); }, 50);
+  if (t === "input" && isKb()) setTimeout(function(){ $("f-hinban").focus(); }, 50);
 }
 function render(){
   if (curTab === "input") { renderDay(); renderHinbanChips(); }
-  else if (curTab === "rate") renderRate();
+  else if (curTab === "rate") { renderHinbanChips(); renderRate(); }
   else if (curTab === "list") renderList();
   else if (curTab === "sum") renderSum();
   else if (curTab === "set") renderSet();
@@ -520,14 +560,50 @@ var F = { men: "", jotai: "" };
 var editId = null, menAuto = false;
 var ORDER = ["f-date","f-hinban","f-naiyo","f-bui","g-men","g-jotai","f-lot","f-qty","f-biko","btnSave"];
 
+function isKb(){ return pget(PREF.kb, false); } // false＝選択式（タッチ）、true＝外付けキーボード
 function applyKeyboardMode(){
-  var on = pget(PREF.kb, true);
+  var on = isKb();
   $("set-kb").checked = on;
+  document.body.classList.toggle("sel", !on);
   document.querySelectorAll("input[data-kb]").forEach(function(el){
-    if (on) el.setAttribute("inputmode", "none");
-    else el.setAttribute("inputmode", el.hasAttribute("data-num") ? "numeric" : "text");
+    if (on) { el.setAttribute("inputmode", "none"); el.readOnly = false; }
+    else if (el.hasAttribute("data-pad")) { el.setAttribute("inputmode", "none"); el.readOnly = true; } // 数字は画面の数字ボタンで
+    else el.setAttribute("inputmode", "text");
   });
   $("kbhint").classList.toggle("hidden", !on);
+  $("selhint").classList.toggle("hidden", on);
+}
+// 数字ボタン（選択式のとき、ロット・数量・日付・生産数を押すと出る）
+function keypad(title, initial, opt){
+  opt = opt || {};
+  return new Promise(function(resolve){
+    var v = String(initial || "");
+    var wrap = document.createElement("div"); wrap.className = "modal";
+    wrap.innerHTML = '<div class="box"><h3>' + esc(title) + '</h3>' + (opt.hint ? '<div class="muted">' + esc(opt.hint) + '</div>' : "") +
+      '<div class="padval"></div><div class="pad">' + [1,2,3,4,5,6,7,8,9].map(function(n){ return '<button data-k="' + n + '">' + n + "</button>"; }).join("") +
+      '<button data-k="C">消す</button><button data-k="0">0</button><button data-k="B">←</button></div>' +
+      '<div class="mrow"><button class="big sub" data-k="X">やめる</button><button class="big" data-k="OK">決定</button></div></div>';
+    document.body.appendChild(wrap);
+    var disp = wrap.querySelector(".padval"), fresh = true;
+    function show(){ disp.textContent = v; }
+    show();
+    function done(x){ document.body.removeChild(wrap); resolve(x); }
+    wrap.querySelectorAll("[data-k]").forEach(function(b){ b.onclick = function(){
+      var k = b.dataset.k;
+      if (k === "X") return done(null);
+      if (k === "OK") return done(v);
+      if (k === "C") v = ""; else if (k === "B") v = v.slice(0, -1);
+      else { if (fresh) v = ""; if (v.length < (opt.max || 8)) v += k; }
+      fresh = false; show();
+    }; });
+  });
+}
+function bindPad(id, title, opt, after){
+  $(id).addEventListener("click", function(){
+    if (isKb()) return;
+    var el = this;
+    keypad(title, el.value, opt).then(function(v){ if (v == null) return; el.value = v; if (after) after(v); });
+  });
 }
 function setSeg(f, v, auto){
   F[f] = v;
@@ -541,6 +617,11 @@ document.querySelectorAll(".seg button").forEach(function(b){
 function next(id){
   var i = ORDER.indexOf(id);
   var el = $(ORDER[Math.min(i + 1, ORDER.length - 1)]);
+  if (el && !isKb()) { // 選択式：画面のキーボードが出ないよう、次の項目を見えるところに動かすだけ
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    var r0 = el.getBoundingClientRect(); if (r0.top < 120 || r0.bottom > window.innerHeight - 40) el.scrollIntoView({block: "center", behavior: "smooth"});
+    return;
+  }
   if (el) { el.focus(); if (el.select && el.tagName === "INPUT") el.select(); var r = el.getBoundingClientRect(); if (r.top < 120 || r.bottom > window.innerHeight - 40) el.scrollIntoView({block: "center", behavior: "smooth"}); }
 }
 [["men", MEN], ["jotai", JOTAI]].forEach(function(p){
@@ -641,7 +722,7 @@ function onHinban(typing){
   if (!v) info.textContent = "";
   else if (m) info.textContent = [m.seiki, m.kubun].filter(Boolean).join("　");
   else if (!typing) { info.textContent = "マスターにない品番です（このまま保存できます）"; info.classList.add("warn"); }
-  renderNaiyoChips(); renderBuiChips(); renderLotChips(); updKingaku();
+  renderHinbanChips(); renderNaiyoChips(); renderBuiChips(); renderLotChips(); updKingaku();
 }
 function onBui(){
   var b = $("f-bui").value.trim(); if (!b || editId) return;
@@ -652,26 +733,40 @@ function onBui(){
     $("i-men").textContent = "これまでの記録から「" + v + "」を選びました（違うときは押し直す）";
   }
 }
-function chipBtns(el, arr, cls, onpick){
-  el.innerHTML = arr.map(function(v){ return '<button type="button" tabindex="-1" class="chip ' + (cls || "") + '">' + esc(v) + "</button>"; }).join("");
-  el.querySelectorAll("button").forEach(function(b, i){ b.onclick = function(){ onpick(arr[i]); }; });
+var more = {hinban: false, naiyo: false, bui: false};
+// ボタンを並べる。items: [{v, sub}] または文字。cur と同じものは色を付ける。limit を超えたら「もっと見る」
+function chipBtns(el, arr, cls, onpick, cur, limit, key){
+  var items = arr.map(function(x){ return typeof x === "object" ? x : {v: x}; });
+  var cut = limit && !more[key] && items.length > limit;
+  var shown = cut ? items.slice(0, limit) : items;
+  el.innerHTML = shown.map(function(it){ return '<button type="button" tabindex="-1" class="chip ' + (cls || "") + (cur && it.v === cur ? " on" : "") + '">' + esc(it.v) + (it.sub ? "<small>" + esc(it.sub) + "</small>" : "") + "</button>"; }).join("") +
+    (cut ? '<button type="button" tabindex="-1" class="chip more">もっと見る（' + (items.length - limit) + '）</button>' : (limit && more[key] && items.length > limit ? '<button type="button" tabindex="-1" class="chip more">少なくする</button>' : ""));
+  el.querySelectorAll("button").forEach(function(b, i){ b.onclick = function(){ if (b.classList.contains("more")) { more[key] = !more[key]; chipBtns(el, arr, cls, onpick, cur, limit, key); return; } onpick(shown[i].v); }; });
 }
-function renderHinbanChips(){ // よく使う品番（最近の記録が多い順）
-  var c = {};
-  allRecs().slice(-300).forEach(function(r){ c[r.hinban] = (c[r.hinban] || 0) + 1; });
-  var a = sortedKeys(c, function(x){ return x; });
-  hinbanList().forEach(function(m){ if (a.length < 6 && a.indexOf(m.hinban) < 0) a.push(m.hinban); });
-  chipBtns($("c-hinban"), a.slice(0, 8), "", function(v){ pick("hinban", v); next("f-hinban"); });
+function activeHinban(){ // よく使う品番：アプリの最近の記録と、1年以内に記録がある品番
+  var c = {}, out = [], seen = {};
+  allRecs().slice(-500).forEach(function(r){ c[r.hinban] = (c[r.hinban] || 0) + 1; });
+  var y = new Date(); y.setFullYear(y.getFullYear() - 1); var ys = fmtD(y);
+  sortedKeys(c, function(x){ return x; }).forEach(function(h){ if (!seen[h]) { seen[h] = 1; out.push(h); } });
+  hinbanList().forEach(function(m){ var l = String(m.last || "").replace(/-/g, "/"); if (!seen[m.hinban] && l >= ys) { seen[m.hinban] = 1; out.push(m.hinban); } });
+  hinbanList().forEach(function(m){ if (!seen[m.hinban]) { seen[m.hinban] = 1; out.push(m.hinban); } });
+  var nActive = Object.keys(seen).length - hinbanList().filter(function(m){ var l = String(m.last || "").replace(/-/g, "/"); return l < ys && !c[m.hinban]; }).length;
+  return {list: out.map(function(h){ var m = findHinban(h); return {v: h, sub: m && m.seiki !== h ? m.seiki : (m ? m.kubun : "")}; }), active: Math.min(Math.max(nActive, 6), 9)};
+}
+function renderHinbanChips(){
+  var a = activeHinban();
+  chipBtns($("c-hinban"), a.list, "", function(v){ pick("hinban", v); next("f-hinban"); }, H($("f-hinban").value), a.active, "hinban");
+  if ($("c-phinban")) chipBtns($("c-phinban"), a.list, "", function(v){ $("p-hinban").value = v; $("p-hinban").dispatchEvent(new Event("picked")); }, H($("p-hinban").value), a.active, "phinban");
 }
 function renderNaiyoChips(){
   var c = naiyoCounts($("f-hinban").value);
-  chipBtns($("c-naiyo"), sortedKeys(c, function(x){ return x; }).slice(0, 12), "", function(v){ pick("naiyo", v); next("f-naiyo"); });
+  chipBtns($("c-naiyo"), sortedKeys(c, function(x){ return x; }), "", function(v){ pick("naiyo", v); renderNaiyoChips(); next("f-naiyo"); }, $("f-naiyo").value.trim(), 16, "naiyo");
 }
 function renderBuiChips(){
-  var h = $("f-hinban").value, s = buiStats(h), a = sortedKeys(s, function(x){ return x.n; }).slice(0, 10);
+  var h = $("f-hinban").value, s = buiStats(h), a = sortedKeys(s, function(x){ return x.n; });
   var m = findHinban(h), zu = m && m.zu && PHOTOS[m.zu];
   var el = $("c-bui");
-  chipBtns(el, a, "", function(v){ pick("bui", v); next("f-bui"); });
+  chipBtns(el, a, "", function(v){ pick("bui", v); renderBuiChips(); next("f-bui"); }, $("f-bui").value.trim(), 16, "bui");
   if (zu) {
     var b = document.createElement("button"); b.type = "button"; b.tabIndex = -1; b.className = "chip photo"; b.textContent = "写真で選ぶ";
     b.onclick = function(){ photoPicker(m.zu); };
@@ -692,8 +787,15 @@ function photoPicker(zu){
   wrap.querySelectorAll(".photos button").forEach(function(b){ b.onclick = function(){ close(); pick("bui", g.items[+b.dataset.i].bui); next("f-bui"); }; });
 }
 function renderLotChips(){
-  var lots = lotsOfHinban($("f-hinban").value).slice(0, 6).map(function(r){ return r.lot; });
-  chipBtns($("c-lot"), lots, "lot", function(v){ $("f-lot").value = v; onLot(); next("f-lot"); });
+  var td = today(); // 先の日付になるロット（打ち間違い）はボタンに出さない
+  var lots = lotsOfHinban($("f-hinban").value).filter(function(r){ return !r.date || r.date <= td; }).slice(0, 8).map(function(r){ return {v: r.lot, sub: r.date ? r.date.slice(5) : ""}; });
+  chipBtns($("c-lot"), lots, "lot", function(v){ $("f-lot").value = v; onLot(); renderLotChips(); next("f-lot"); }, $("f-lot").value.trim());
+  var b = document.createElement("button"); b.type = "button"; b.tabIndex = -1; b.className = "chip more"; b.textContent = "ほかのロット（数字で入れる）";
+  b.onclick = function(){ keypad("鋳造ロット", "", {max: 6, hint: "6けた（例 261014）"}).then(function(v){ if (v == null) return; $("f-lot").value = v; onLot(); renderLotChips(); next("f-lot"); }); };
+  $("c-lot").appendChild(b);
+}
+function renderQtyChips(){
+  chipBtns($("c-qty"), ["1", "2", "3", "4", "5", "6", "8", "10"], "", function(v){ $("f-qty").value = v; updKingaku(); renderQtyChips(); next("f-qty"); }, String($("f-qty").value));
 }
 function onLot(){
   var lot = hank($("f-lot").value.trim()); $("f-lot").value = lot;
@@ -730,8 +832,11 @@ $("f-qty").addEventListener("keydown", function(e){
   else if (e.key === "ArrowUp" || e.key === "+") { e.preventDefault(); this.value = (+this.value || 0) + 1; updKingaku(); }
   else if (e.key === "ArrowDown" || e.key === "-") { e.preventDefault(); this.value = Math.max(1, (+this.value || 0) - 1); updKingaku(); }
 });
-$("qPlus").onclick = function(){ $("f-qty").value = (+$("f-qty").value || 0) + 1; updKingaku(); };
-$("qMinus").onclick = function(){ $("f-qty").value = Math.max(1, (+$("f-qty").value || 0) - 1); updKingaku(); };
+$("qPlus").onclick = function(){ $("f-qty").value = (+$("f-qty").value || 0) + 1; updKingaku(); renderQtyChips(); };
+$("qMinus").onclick = function(){ $("f-qty").value = Math.max(1, (+$("f-qty").value || 0) - 1); updKingaku(); renderQtyChips(); };
+bindPad("f-qty", "数量", {max: 4}, function(){ normQty($("f-qty")); updKingaku(); renderQtyChips(); next("f-qty"); });
+bindPad("f-lot", "鋳造ロット", {max: 6, hint: "6けた（例 261014）"}, function(){ onLot(); renderLotChips(); next("f-lot"); });
+bindPad("f-date", "確認日", {max: 8, hint: "月日を4けたで（例 1022）"}, function(v){ var d = parseDate(v); if (!d) { toast("日付が読めません（例：1022）"); setDate(today()); return; } setDate(d); });
 $("f-biko").addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); next("f-biko"); } });
 $("btnSave").onclick = saveForm;
 $("btnClear").onclick = function(){ clearForm(true); };
@@ -744,12 +849,13 @@ function clearForm(all){
   var ids = ["f-naiyo","f-bui","f-lot","f-biko"];
   if (all) ids.push("f-hinban");
   ids.forEach(function(id){ $(id).value = ""; });
-  $("f-qty").value = "1"; setSeg("men", ""); setSeg("jotai", "");
+  $("f-qty").value = "1"; setSeg("men", ""); setSeg("jotai", ""); renderQtyChips();
   ["i-men","i-kingaku","i-lot"].forEach(function(id){ $(id).textContent = ""; });
   $("editbar").classList.add("hidden"); $("btnDelete").classList.add("hidden"); $("btnSave").textContent = "保存";
   if (!parseDate($("f-date").value)) setDate(today());
   onHinban(!$("f-hinban").value);
-  (all || !$("f-hinban").value ? $("f-hinban") : $("f-naiyo")).focus();
+  if (isKb()) (all || !$("f-hinban").value ? $("f-hinban") : $("f-naiyo")).focus();
+  else window.scrollTo({top: 0, behavior: "smooth"});
 }
 
 function saveForm(){
@@ -772,7 +878,7 @@ function saveForm(){
   if (miss.length) { toast("入っていません：" + miss.map(function(m){ return m[0]; }).join("・"), 3000); $(miss[0][1]).focus(); return; }
 
   if (!editId) {
-    var dup = allRecs().filter(function(x){ return x.date === r.date && x.hinban === r.hinban && x.naiyo === r.naiyo && x.bui === r.bui && x.lot === r.lot && x.men === r.men && x.jotai === r.jotai; })[0];
+    var dup = appRecs().filter(function(x){ return x.date === r.date && x.hinban === r.hinban && x.naiyo === r.naiyo && x.bui === r.bui && x.lot === r.lot && x.men === r.men && x.jotai === r.jotai; })[0];
     if (dup && confirm("同じ日に同じ内容（" + r.hinban + "・" + r.naiyo + "・" + r.bui + "・ロット " + r.lot + "）が " + dup.qty + " 個あります。\n\nOK：数量を足す（" + dup.qty + "＋" + r.qty + "）\nキャンセル：別の行として登録する")) {
       editId = dup.id; r.qty = Number(dup.qty) + r.qty; if (!r.biko) r.biko = dup.biko;
     }
@@ -800,6 +906,7 @@ function saveForm(){
 
 function editRec(id){
   if (VIEW) return;
+  if (String(id).charAt(0) === "h") { toast("これまでのExcelの記録です（アプリでは直せません）", 3000); return; }
   var r = DB.recs[id]; if (!r) return;
   showTab("input");
   editId = id;
@@ -811,7 +918,7 @@ function editRec(id){
   onLot(); updKingaku();
   $("editbar").classList.remove("hidden"); $("btnDelete").classList.remove("hidden"); $("btnSave").textContent = "修正を保存";
   window.scrollTo({top: 0, behavior: "smooth"});
-  setTimeout(function(){ $("f-hinban").focus(); }, 80);
+  if (isKb()) setTimeout(function(){ $("f-hinban").focus(); }, 80);
 }
 function adminCheck(title){
   return askText(title, "管理者パスワードを入れてください", true).then(function(pin){
@@ -838,7 +945,7 @@ function rowHtml(r, withDate){
     '<td class="c">' + (r.men === "加工面" ? '<span class="tag ka">○</span>' : "") + '</td><td class="c">' + (r.men === "素材面" ? '<span class="tag so">○</span>' : "") + "</td>" +
     '<td class="c">' + (r.jotai === "未加工" ? "○" : "") + '</td><td class="c">' + (r.jotai === "半ペタ" ? "○" : "") + '</td><td class="c">' + (r.jotai === "完成" ? "○" : "") + "</td>" +
     "<td>" + esc(r.lot) + '</td><td class="r">' + esc(r.qty) + "</td><td>" + esc(r.user) + "</td><td>" + esc(r.biko) + "</td>" +
-    "<td>" + (DB.out.indexOf(r.id) >= 0 ? '<span class="tag wait">未送信</span>' : "") + "</td></tr>";
+    "<td>" + (r.h ? '<span class="tag">Excel</span>' : DB.out.indexOf(r.id) >= 0 ? '<span class="tag wait">未送信</span>' : "") + "</td></tr>";
 }
 function bindRows(tbl){ tbl.querySelectorAll("tr.click").forEach(function(tr){ tr.onclick = function(){ editRec(tr.dataset.id); }; }); }
 function renderDay(){
@@ -875,6 +982,9 @@ hinbanInput("p-hinban", "s-phinban", function(go){
   if (go) $("p-lot").focus();
 });
 hinbanInput("r-hinban", "s-rhinban", function(){ renderRate(); });
+$("p-hinban").addEventListener("picked", function(){ var m = findHinban(this.value); $("i-phinban").textContent = m ? [m.seiki, m.kubun].join("　") : ""; renderHinbanChips(); if (!isKb()) $("p-lot").click(); });
+bindPad("p-lot", "鋳造ロット", {max: 6, hint: "6けた（例 261020）"}, function(){ showPLot(); if (!isKb()) $("p-seisan").click(); });
+bindPad("p-seisan", "生産数（造型数）", {max: 6}, function(){ normQty($("p-seisan")); });
 $("p-lot").addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); showPLot(); $("p-seisan").focus(); } });
 $("p-lot").addEventListener("blur", showPLot);
 function showPLot(){
@@ -896,7 +1006,7 @@ function saveLot(){
   if (!h || !lot || !(s > 0)) { toast("品番・鋳造ロット・生産数を入れてください"); return; }
   putLot(h, lot, s);
   toast("生産数を保存しました：" + h + "　" + lot + "　" + num(s));
-  $("p-lot").value = ""; $("p-seisan").value = ""; $("i-plot").textContent = ""; $("p-lot").focus();
+  $("p-lot").value = ""; $("p-seisan").value = ""; $("i-plot").textContent = ""; if (isKb()) $("p-lot").focus();
   $("r-hinban").value = h;
   renderRate();
 }
@@ -917,7 +1027,7 @@ function fillKubun(sel){
 }
 function renderRate(){
   fillKubun($("r-kubun"));
-  fillMonthSelect($("r-month"), 12);
+  fillMonthSelect($("r-month"), 72);
   var kb = $("r-kubun").value, mon = $("r-month").value, rows = lotRows();
   var agg = {};
   Object.keys(rows).forEach(function(k){
@@ -956,7 +1066,7 @@ function renderRate(){
 
 // ---------------------------------------------------------------- 一覧・確認
 function renderList(){
-  fillMonthSelect($("l-month"), 12);
+  fillMonthSelect($("l-month"), 72);
   var mon = $("l-month").value, q = H($("l-q").value.trim()), mn = $("l-men").value, showDel = $("l-del").checked;
   var list = allRecs(showDel).filter(function(r){
     if (r.month !== mon) return false;
@@ -1013,7 +1123,7 @@ function aggregate(list){
   return A;
 }
 function renderSum(){
-  fillMonthSelect($("s-month"), 12);
+  fillMonthSelect($("s-month"), 72);
   fillKubun($("s-kubun"));
   var mon = $("s-month").value, kb = $("s-kubun").value, rg = monthRange(mon);
   $("s-range").textContent = "確認日 " + rg[0] + "〜" + rg[1];
@@ -1060,17 +1170,17 @@ $("s-hinban").oninput = renderSum;
 
 // ---------------------------------------------------------------- 設定
 function renderSet(){
-  fillMonthSelect($("x-month"), 12, '<option value="all">全期間</option>');
+  fillMonthSelect($("x-month"), 72, '<option value="all">全期間</option>');
   var m = DB.master, nl = Object.keys(DB.lots).length;
   $("m-info").textContent = "品番 " + m.hinban.length + "件／不良内容 " + m.furyo.length + "件／部位 " + m.bui.length + "件／生産数 " + num(nl) + "ロット" + (m.at.hinban ? "（" + String(m.at.hinban).slice(0, 10) + " 更新）" : "");
-  $("ver").textContent = APP_VER + (VIEW ? "（閲覧用）" : "") + "　この端末の記録 " + num(Object.keys(DB.recs).length) + "件";
+  $("ver").textContent = APP_VER + (VIEW ? "（閲覧用）" : "") + "　アプリの記録 " + num(Object.keys(DB.recs).length) + "件" + (window.KB_HISTORY ? "　これまでのExcelの記録 " + num(HIST.length) + "件（" + window.KB_HISTORY.asOf + "まで）" : "");
   renderSyncInfo();
 }
 $("set-kb").onchange = function(){ pset(PREF.kb, this.checked); applyKeyboardMode(); toast(this.checked ? "画面のキーボードを出しません" : "画面のキーボードを出します"); };
 
 function askText(title, label, password, initial, numeric){
   return new Promise(function(resolve){
-    var kb = pget(PREF.kb, true);
+    var kb = isKb();
     var wrap = document.createElement("div");
     wrap.className = "modal";
     wrap.innerHTML = '<div class="box"><h3>' + esc(title) + '</h3><div class="muted">' + esc(label) + '</div><div class="fld"><input type="' + (password ? "password" : "text") + '" ' + (kb ? 'inputmode="none"' : ((password || numeric) ? 'inputmode="numeric"' : "")) + ' autocomplete="off" value="' + esc(initial || "") + '"></div><div class="mrow"><button class="big sub">やめる</button><button class="big">OK</button></div></div>';
@@ -1273,7 +1383,8 @@ function buildExcel(list, from, to, label){
     ws.views = [{state: "frozen", ySplit: 2}];
   });
 
-  // 3) 紙と同じ見た目（加工畑不良一覧表・1ページ41行）
+  // 3) 紙と同じ見た目（加工畑不良一覧表・1ページ41行）。多すぎるときは作らない
+  if (list.length > 2500) return finish();
   var ws = wb.addWorksheet("原紙", {pageSetup: {paperSize: 9, orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: {left: .4, right: .4, top: .5, bottom: .5, header: .3, footer: .3}}});
   [8.5, 13.5, 11.6, 16.6, 3.9, 3.9, 3.9, 3.9, 3.9, 12.6, 6.6].forEach(function(w, i){ ws.getColumn(i + 1).width = w; });
   var head = ["記入日", "品番", "不良内容", "部位", "加", "素", "未", "半", "完", "鋳造ロット", "数量"];
@@ -1294,18 +1405,21 @@ function buildExcel(list, from, to, label){
     if (p < pages - 1) ws.getRow(row - 1).addPageBreak();
   }
   ws.headerFooter.oddFooter = "&L" + from + "〜" + to + "&R&P / &N";
+  return finish();
 
+  function finish(){
   // 4) 一覧
   var w2 = wb.addWorksheet("一覧");
   var h2 = ["確認日", "月度", "品番", "正式品番", "区分", "不良内容", "部位", "加工面", "素材面", "状態", "鋳造ロット", "数量", "単価", "金額", "作業者", "備考", "確認者"];
   w2.addRow(h2);
-  list.forEach(function(r){ w2.addRow([xlDate(r.date), r.month, r.hinban, r.seiki || "", kubunOf(r.hinban), r.naiyo, r.bui, r.men === "加工面" ? "○" : "", r.men === "素材面" ? "○" : "", r.jotai, r.lot, Number(r.qty), r.tanka === "" ? null : r.tanka, r.kingaku === "" ? null : r.kingaku, r.user, r.biko, (DB.confs[r.date] || {}).by || ""]); });
+  list.forEach(function(r){ var mm = findHinban(r.hinban); w2.addRow([xlDate(r.date), r.month, r.hinban, r.seiki || (mm ? mm.seiki : ""), kubunOf(r.hinban), r.naiyo, r.bui, r.men === "加工面" ? "○" : "", r.men === "素材面" ? "○" : "", r.jotai, r.lot, Number(r.qty), r.tanka === "" ? null : r.tanka, r.kingaku === "" ? null : r.kingaku, r.user, r.biko, (DB.confs[r.date] || {}).by || ""]); });
   [11, 11, 13, 16, 10, 11, 14, 7, 7, 7, 10, 6, 8, 10, 9, 22, 9].forEach(function(w, i){ w2.getColumn(i + 1).width = w; });
   w2.getColumn(1).numFmt = "yyyy/m/d"; w2.getColumn(13).numFmt = "#,##0"; w2.getColumn(14).numFmt = "#,##0";
   w2.getRow(1).eachCell(function(c){ c.font = {bold: true}; c.fill = GRAY; });
   w2.views = [{state: "frozen", ySplit: 1}];
   w2.autoFilter = {from: "A1", to: {row: 1, column: h2.length}};
   return wb.xlsx.writeBuffer();
+  }
 }
 
 // ---------------------------------------------------------------- 同期
@@ -1382,7 +1496,7 @@ function syncNow(manual, full){
     if (manual) toast("同期できませんでした：" + lastErr, 3500);
   }).then(function(){
     syncing = false; renderBadge();
-    if (curTab !== "input") render(); else if (!editId) renderDay();
+    if (curTab !== "input") render(); else { renderDay(); renderHinbanChips(); renderNaiyoChips(); renderBuiChips(); renderLotChips(); }
   });
   return p;
 }
@@ -1398,6 +1512,7 @@ window.__kb = {monthOf: monthOf, parseDate: parseDate, lotRows: lotRows};
 idbOpen().then(function(){ return idbGet("db"); }).then(function(saved){
   if (saved) { var e = EMPTY(); Object.keys(e).forEach(function(k){ if (saved[k] !== undefined) e[k] = saved[k]; }); e.master = Object.assign(EMPTY().master, saved.master || {}); DB = e; }
   window.__kb.DB = function(){ return DB; };
+  loadHistory();
   var us = CFG.users || [];
   $("user").innerHTML = '<option value="">選ぶ</option>' + us.map(function(u){ return "<option>" + esc(u) + "</option>"; }).join("");
   $("user").value = pget(PREF.user, "");
@@ -1410,7 +1525,7 @@ idbOpen().then(function(){ return idbGet("db"); }).then(function(saved){
   $("loading").classList.add("hidden"); $("main").classList.remove("hidden");
   applyKeyboardMode();
   setDate(today());
-  onHinban(true);
+  onHinban(true); renderQtyChips();
   showTab(curTab);
   renderBadge();
   syncNow(false, !DB.since);
