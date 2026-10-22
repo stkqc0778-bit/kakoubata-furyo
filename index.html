@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>加工畑不良一覧表</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#2b5f8a">
+<script src="config.js"></script>
+<script src="bui.js"></script>
+<style>
+:root{
+  --bg:#f3f5f8; --card:#fff; --ink:#1d2733; --sub:#5b6878; --line:#d5dbe3;
+  --pri:#2b5f8a; --pri2:#e3edf6; --ok:#1f8a4c; --warn:#c77700; --ng:#c62828;
+  --so:#b3541e; --so2:#fbeee6; --ka:#2b5f8a; --ka2:#e3edf6;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans JP","Hiragino Sans","Meiryo",sans-serif;font-size:17px}
+button{font:inherit;cursor:pointer;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:20;background:var(--pri);color:#fff;padding:8px 12px 0}
+.hrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.htitle{font-weight:700;font-size:19px;margin-right:auto}
+.badge{font-size:14px;padding:4px 10px;border-radius:14px;background:#fff3;white-space:nowrap}
+.badge.ok{background:#1f8a4c}.badge.wait{background:#c77700}.badge.err{background:#c62828}.badge.local{background:#666}
+.huser{display:flex;align-items:center;gap:6px;font-size:15px}
+.huser select{padding:4px 6px;border-radius:6px;border:0;background:#fff;color:var(--ink)}
+nav{display:flex;gap:2px;margin-top:8px;overflow-x:auto}
+nav button{flex:1;min-width:96px;border:0;background:#ffffff22;color:#fff;padding:10px 6px;border-radius:8px 8px 0 0;font-size:16px;white-space:nowrap}
+nav button.on{background:var(--bg);color:var(--pri);font-weight:700}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+h2{font-size:18px;margin:0 0 10px}
+h3{font-size:16px;margin:16px 0 8px}
+.muted{color:var(--sub);font-size:14px}
+.hidden{display:none!important}
+
+.form{display:grid;grid-template-columns:120px 1fr;gap:10px 12px;align-items:start}
+.form>label{padding-top:12px;font-weight:700}
+.req{color:var(--ng);font-size:13px;margin-left:2px;font-weight:400}
+.fld{position:relative;min-width:0}
+.fld input[type=text],.fld input[type=password]{width:100%;padding:11px 12px;border:2px solid var(--line);border-radius:8px;background:#fff;font-size:18px}
+.fld input:focus,.seg:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px #2b5f8a33}
+.info{margin-top:4px;font-size:14px;color:var(--sub);min-height:1em}
+.info.warn{color:var(--warn)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:16px;padding:5px 11px;font-size:15px}
+.chip.lot{font-variant-numeric:tabular-nums}
+.chip.photo{border-color:var(--pri);color:var(--pri);font-weight:700}
+.sug{position:absolute;left:0;right:0;top:48px;z-index:30;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 16px #0002;max-height:320px;overflow:auto}
+.sug div{padding:9px 12px;border-bottom:1px solid #eef1f4}
+.sug div.on{background:var(--pri2)}
+.sug small{color:var(--sub);margin-left:8px}
+.seg{display:flex;gap:8px;border:2px solid transparent;border-radius:10px;padding:2px}
+.seg button{flex:1;padding:12px 6px;border:2px solid var(--line);background:#fff;border-radius:8px;font-size:18px}
+.seg button .k{display:block;font-size:12px;color:var(--sub)}
+.seg button.on{color:#fff;font-weight:700}
+.seg[data-f=men] button[data-v="加工面"].on{background:var(--ka);border-color:var(--ka)}
+.seg[data-f=men] button[data-v="素材面"].on{background:var(--so);border-color:var(--so)}
+.seg[data-f=jotai] button.on{background:#4a5868;border-color:#4a5868}
+.seg button.on .k{color:#fffc}
+.row{display:flex;gap:8px;align-items:center}
+.row input{flex:1;min-width:0}
+.qty-row input{flex:0 0 110px;text-align:right}
+.sbtn{padding:10px 14px;border:1px solid var(--line);background:#fff;border-radius:8px;white-space:nowrap}
+.big{padding:14px 20px;font-size:19px;border-radius:10px;border:0;background:var(--pri);color:#fff;font-weight:700}
+.big:focus{outline:3px solid #f6c344}
+.big.sub{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:400}
+.big.danger{background:var(--ng)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.editbar{background:#fff7e0;border:1px solid #f0d58a;border-radius:8px;padding:8px 12px;margin-bottom:10px}
+.kbhint{font-size:13px;color:var(--sub);margin-top:8px}
+
+.tblwrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;width:100%;font-size:15px;background:#fff}
+th,td{border:1px solid var(--line);padding:6px 7px;text-align:left;white-space:nowrap}
+th{background:#eef1f5;font-weight:700}
+td.c,th.c{text-align:center}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+tr.click{cursor:pointer}
+tr.click:hover td{background:#f6f9fc}
+tr.del td{color:#999;text-decoration:line-through}
+tr.sel td{background:#fff7e0}
+.dayhead td{background:#f7f2e8;font-weight:700}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:13px;font-weight:700}
+.tag.so{background:var(--so2);color:var(--so)}
+.tag.ka{background:var(--ka2);color:var(--ka)}
+.tag.ok{background:#e3f4ea;color:var(--ok)}
+.tag.wait{background:#fff0d6;color:var(--warn)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.filters select,.filters input[type=text]{padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px}
+.kpi .l{font-size:14px;color:var(--sub)}
+.kpi .v{font-size:26px;font-weight:700;margin-top:2px}
+.kpi .v small{font-size:14px;font-weight:400;color:var(--sub)}
+.bar{height:12px;border-radius:3px;display:inline-block;vertical-align:middle}
+.bar.so{background:var(--so)}.bar.ka{background:var(--ka)}.bar.rt{background:#7a4fb0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid2>div{min-width:0}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#222;color:#fff;padding:12px 20px;border-radius:10px;z-index:100;font-size:17px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:.95}
+.modal{position:fixed;inset:0;background:#0006;z-index:90;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal .box{background:#fff;border-radius:12px;padding:18px;width:min(460px,100%);max-height:92vh;overflow:auto}
+.modal .box.wide{width:min(1000px,100%)}
+.modal .box h3{margin-top:0}
+.modal .fld{margin:10px 0}
+.modal .mrow{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.photos button{border:2px solid var(--line);border-radius:10px;background:#fff;padding:4px;text-align:center}
+.photos button.on{border-color:var(--pri);box-shadow:0 0 0 3px #2b5f8a44}
+.photos img{width:100%;height:130px;object-fit:contain;display:block}
+.photos span{display:block;font-weight:700;padding:4px 0 2px}
+.setrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #eef1f4}
+.setrow:last-child{border-bottom:0}
+.setrow .l{min-width:200px;font-weight:700}
+.switch{display:flex;align-items:center;gap:8px}
+.switch input{width:22px;height:22px}
+.viewbanner{background:#fff3cd;color:#6b5100;text-align:center;padding:6px;font-size:14px}
+.loading{padding:40px;text-align:center;color:var(--sub)}
+@media (max-width:700px){
+  .form{grid-template-columns:1fr}
+  .form>label{padding-top:2px}
+  .grid2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <div class="htitle">加工畑不良一覧表</div>
+    <div class="huser noview">作業者 <select id="user"></select></div>
+    <div id="badge" class="badge">確認中…</div>
+  </div>
+  <nav id="tabs">
+    <button data-tab="input" class="noview">入力</button>
+    <button data-tab="rate">生産数・不良率</button>
+    <button data-tab="list">一覧・確認</button>
+    <button data-tab="sum">集計</button>
+    <button data-tab="set">設定</button>
+  </nav>
+</header>
+<div id="viewbanner" class="viewbanner hidden">閲覧用です（入力・修正はできません）</div>
+<div id="loading" class="loading">読み込み中…</div>
+
+<main id="main" class="hidden">
+<!-- ============================ 入力 ============================ -->
+<section id="tab-input">
+  <div class="card">
+    <div id="editbar" class="editbar hidden">記録を修正しています　<button class="sbtn" id="cancelEdit">修正をやめる</button></div>
+    <div class="form">
+      <label for="f-date">確認日<span class="req">必須</span></label>
+      <div class="fld">
+        <div class="row">
+          <button class="sbtn" type="button" id="dPrev" tabindex="-1">◀ 前日</button>
+          <input type="text" id="f-date" data-kb autocomplete="off" placeholder="例）2026/10/22 または 1022">
+          <button class="sbtn" type="button" id="dToday" tabindex="-1">今日</button>
+        </div>
+        <div class="info" id="i-date"></div>
+      </div>
+
+      <label for="f-hinban">品番<span class="req">必須</span></label>
+      <div class="fld">
+        <input type="text" id="f-hinban" data-kb autocomplete="off" placeholder="例）2364H・2245（一部を打つと候補が出ます）">
+        <div class="sug hidden" id="s-hinban"></div>
+        <div class="info" id="i-hinban"></div>
+        <div class="chips" id="c-hinban"></div>
+      </div>
+
+      <label for="f-naiyo">不良内容<span class="req">必須</span></label>
+      <div class="fld">
+        <input type="text" id="f-naiyo" data-kb autocomplete="off" placeholder="例）砂カミ・ス・ヒケ">
+        <div class="sug hidden" id="s-naiyo"></div>
+        <div class="chips" id="c-naiyo"></div>
+      </div>
+
+      <label for="f-bui">部位<span class="req">必須</span></label>
+      <div class="fld">
+        <input type="text" id="f-bui" data-kb autocomplete="off" placeholder="例）外周・刻印端面">
+        <div class="sug hidden" id="s-bui"></div>
+        <div class="chips" id="c-bui"></div>
+      </div>
+
+      <label>加工面／素材面<span class="req">必須</span></label>
+      <div class="fld">
+        <div class="seg" id="g-men" data-f="men" tabindex="0">
+          <button type="button" data-v="加工面" tabindex="-1">加工面<span class="k">キー 1</span></button>
+          <button type="button" data-v="素材面" tabindex="-1">素材面<span class="k">キー 2</span></button>
+        </div>
+        <div class="info" id="i-men"></div>
+      </div>
+
+      <label>状態<span class="req">必須</span></label>
+      <div class="fld">
+        <div class="seg" id="g-jotai" data-f="jotai" tabindex="0">
+          <button type="button" data-v="未加工" tabindex="-1">未加工<span class="k">キー 1</span></button>
+          <button type="button" data-v="半ペタ" tabindex="-1">半ペタ<span class="k">キー 2</span></button>
+          <button type="button" data-v="完成" tabindex="-1">完成<span class="k">キー 3</span></button>
+        </div>
+      </div>
+
+      <label for="f-lot">鋳造ロット<span class="req">必須</span></label>
+      <div class="fld">
+        <div class="row">
+          <input type="text" id="f-lot" data-kb autocomplete="off" placeholder="例）261014">
+          <button class="sbtn" type="button" id="lotUnknown" tabindex="-1">不明</button>
+        </div>
+        <div class="chips" id="c-lot"></div>
+        <div class="info" id="i-lot"></div>
+      </div>
+
+      <label for="f-qty">数量<span class="req">必須</span></label>
+      <div class="fld">
+        <div class="row qty-row">
+          <button class="sbtn" type="button" id="qMinus" tabindex="-1">－</button>
+          <input type="text" id="f-qty" data-kb data-num autocomplete="off" value="1">
+          <button class="sbtn" type="button" id="qPlus" tabindex="-1">＋</button>
+          <span class="muted" id="i-kingaku"></span>
+        </div>
+      </div>
+
+      <label for="f-biko">備考</label>
+      <div class="fld">
+        <input type="text" id="f-biko" data-kb autocomplete="off" placeholder="気づいたこと（なくてもよい）">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="big" id="btnSave">保存</button>
+      <button class="big sub" id="btnClear" tabindex="-1">入力を消す</button>
+      <button class="big danger hidden" id="btnDelete" tabindex="-1">削除</button>
+    </div>
+    <div class="kbhint" id="kbhint">外付けキーボード：Enter で次の項目へ。候補は ↑↓ で選んで Enter（空欄で ↓ を押すと一覧）。加工面／素材面・状態は数字キー。最後に Enter で保存。</div>
+  </div>
+
+  <div class="card">
+    <h2>この日の入力 <span class="muted" id="dayCount"></span></h2>
+    <div class="tblwrap"><table id="dayTable"></table></div>
+  </div>
+</section>
+
+<!-- ============================ 生産数・不良率 ============================ -->
+<section id="tab-rate" class="hidden">
+  <div class="card noview">
+    <h2>生産数（造型数）の入力</h2>
+    <div class="form">
+      <label for="p-hinban">品番</label>
+      <div class="fld"><input type="text" id="p-hinban" data-kb autocomplete="off" placeholder="品番"><div class="sug hidden" id="s-phinban"></div><div class="info" id="i-phinban"></div></div>
+      <label for="p-lot">鋳造ロット</label>
+      <div class="fld"><input type="text" id="p-lot" data-kb autocomplete="off" placeholder="例）261020"><div class="info" id="i-plot"></div></div>
+      <label for="p-seisan">生産数</label>
+      <div class="fld"><input type="text" id="p-seisan" data-kb data-num autocomplete="off" placeholder="例）2000"></div>
+    </div>
+    <div class="actions"><button class="big" id="btnLot">生産数を保存</button><span class="muted">同じ品番・ロットを入れると上書きします</span></div>
+  </div>
+  <div class="card">
+    <div class="filters">
+      <select id="r-kubun"></select>
+      <select id="r-month"></select>
+      <span class="muted">月度は鋳造ロットの日付で分けます</span>
+    </div>
+    <h3 style="margin-top:0">品番ごとの素材不良率</h3>
+    <div class="tblwrap"><table id="r-summary"></table></div>
+    <h3 id="r-lottitle">ロットごと</h3>
+    <div class="filters">
+      <div class="fld" style="min-width:280px"><input type="text" id="r-hinban" data-kb autocomplete="off" placeholder="品番を選ぶ（上の表を押しても選べます）"><div class="sug hidden" id="s-rhinban"></div></div>
+      <label class="switch muted"><input type="checkbox" id="r-all"> 全部のロットを表示（ふだんは選んだ月度だけ）</label>
+    </div>
+    <div class="muted" id="r-info"></div>
+    <div class="tblwrap"><table id="r-lots"></table></div>
+  </div>
+</section>
+
+<!-- ============================ 一覧・確認 ============================ -->
+<section id="tab-list" class="hidden">
+  <div class="card">
+    <div class="filters">
+      <select id="l-month"></select>
+      <input type="text" id="l-q" placeholder="品番・不良内容・部位・ロットで絞る">
+      <select id="l-men"><option value="">加工面・素材面</option><option>加工面</option><option>素材面</option></select>
+      <label class="switch muted"><input type="checkbox" id="l-del"> 削除した記録も表示</label>
+    </div>
+    <div class="muted" id="l-info"></div>
+    <div class="tblwrap"><table id="listTable"></table></div>
+  </div>
+</section>
+
+<!-- ============================ 集計 ============================ -->
+<section id="tab-sum" class="hidden">
+  <div class="card">
+    <div class="filters">
+      <select id="s-month"></select>
+      <select id="s-kubun"></select>
+      <span class="muted" id="s-range"></span>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div><h3>品番別</h3><div class="tblwrap"><table id="t-hinban"></table></div></div>
+      <div><h3>不良内容別</h3><div class="tblwrap"><table id="t-naiyo"></table></div></div>
+    </div>
+    <h3>品番 × 不良内容</h3>
+    <div class="tblwrap"><table id="t-cross"></table></div>
+    <h3>部位（多い順）</h3>
+    <div class="filters"><input type="text" id="s-hinban" placeholder="品番で絞る（空欄はすべて）"></div>
+    <div class="tblwrap"><table id="t-bui"></table></div>
+    <h3>月度ごとの推移（確認日で集計・直近6か月度）</h3>
+    <div class="tblwrap"><table id="t-trend"></table></div>
+  </div>
+</section>
+
+<!-- ============================ 設定 ============================ -->
+<section id="tab-set" class="hidden">
+  <div class="card">
+    <h2>Excel保存</h2>
+    <div class="setrow">
+      <span class="l">期間</span>
+      <select id="x-month"></select>
+      <span class="muted">または</span>
+      <input type="text" id="x-from" placeholder="開始 2026/10/01" style="width:150px;padding:8px;border:1px solid var(--line);border-radius:8px">〜
+      <input type="text" id="x-to" placeholder="終了 2026/10/31" style="width:150px;padding:8px;border:1px solid var(--line);border-radius:8px">
+    </div>
+    <div class="setrow"><button class="big" id="btnExcel">Excel保存</button>
+      <span class="muted">今の「加工畑不良一覧表.xlsx」と同じ形（品番ごとのシート・TVC／フコク／その他向け不良率）＋紙と同じ見た目＋一覧。パソコンで押すと「ダウンロード」に保存されます。</span></div>
+  </div>
+  <div class="card noview">
+    <h2>入力のしかた</h2>
+    <div class="setrow"><span class="l">画面のキーボード</span>
+      <label class="switch"><input type="checkbox" id="set-kb"> 外付けキーボードで入力する（画面にキーボードを出さない）</label></div>
+  </div>
+  <div class="card noview">
+    <h2>マスター（品番・不良内容・部位・生産数）</h2>
+    <div class="setrow"><span class="l">登録状況</span><span id="m-info" class="muted"></span></div>
+    <div class="setrow"><span class="l">マスターをExcelから更新</span>
+      <input type="file" id="m-file" accept=".xlsx">
+      <button class="big sub" id="btnMaster">読み込んで反映（管理者）</button></div>
+    <div class="setrow"><span class="l">今のマスター</span><button class="big sub" id="btnTemplate">マスターをExcelで保存</button>
+      <span class="muted">シート「品番」「不良内容」「部位」「生産数」。直して上の「更新」で読み込みます</span></div>
+  </div>
+  <div class="card">
+    <h2>同期</h2>
+    <div class="setrow"><span class="l">状態</span><span id="sy-info" class="muted"></span></div>
+    <div class="setrow"><button class="big sub" id="btnSync">今すぐ同期</button>
+      <button class="big sub" id="btnFull">全部読み直す</button>
+      <a class="muted" id="viewLink" href="?view">閲覧用URL（?view）</a></div>
+    <div class="setrow"><span class="l">版</span><span class="muted" id="ver"></span></div>
+  </div>
+</section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+var APP_VER = "kakoubata-v2";
+var CFG = window.APP_CONFIG || {};
+var PHOTOS = window.BUI_PHOTOS || {};
+var VIEW = /[?&]view\b/.test(location.search);
+var START = Number(CFG.monthStartDay) || 21;
+var PREF = { user: "kb_user", kb: "kb_keyboard" };
+var MEN = ["加工面", "素材面"], JOTAI = ["未加工", "半ペタ", "完成"];
+var KUBUN = ["TVC向け", "フコク向け", "その他向け"];
+
+// ---------------------------------------------------------------- 保存（IndexedDB。だめなら localStorage）
+function pget(k, d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+function pset(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+var idb = null;
+function idbOpen(){
+  return new Promise(function(res){
+    try{
+      var rq = indexedDB.open("kakoubata", 1);
+      rq.onupgradeneeded = function(){ rq.result.createObjectStore("kv"); };
+      rq.onsuccess = function(){ idb = rq.result; res(); };
+      rq.onerror = function(){ res(); };
+    }catch(e){ res(); }
+  });
+}
+function idbGet(k){
+  return new Promise(function(res){
+    if (!idb) return res(pget("kb_" + k, null));
+    try{ var rq = idb.transaction("kv").objectStore("kv").get(k); rq.onsuccess = function(){ res(rq.result || null); }; rq.onerror = function(){ res(null); }; }catch(e){ res(null); }
+  });
+}
+function idbSet(k, v){
+  if (!idb) { try{ localStorage.setItem("kb_" + k, JSON.stringify(v)); }catch(e){ toast("端末に保存できませんでした"); } return; }
+  try{ idb.transaction("kv", "readwrite").objectStore("kv").put(v, k); }catch(e){ toast("端末に保存できませんでした"); }
+}
+var EMPTY = function(){ return {recs: {}, lots: {}, out: [], lotOut: [], confs: {}, confOut: [], master: {hinban: [], furyo: [], bui: [], at: {}}, since: "", lastSync: ""}; };
+var DB = EMPTY();
+var saveT = null;
+function persist(){ clearTimeout(saveT); saveT = setTimeout(function(){ idbSet("db", DB); }, 50); }
+
+// ---------------------------------------------------------------- 小道具
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function pad(n){ return (n < 10 ? "0" : "") + n; }
+function fmtD(d){ return d.getFullYear() + "/" + pad(d.getMonth()+1) + "/" + pad(d.getDate()); }
+function today(){ return fmtD(new Date()); }
+function nowIso(){ return new Date().toISOString(); }
+function uid(){ return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); }
+function hank(s){ return String(s == null ? "" : s).replace(/[０-９Ａ-Ｚａ-ｚ－]/g, function(c){ return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); }); }
+function yen(n){ return (n === "" || n == null || isNaN(n)) ? "" : Math.round(n).toLocaleString("ja-JP") + "円"; }
+function num(n){ return Number(n || 0).toLocaleString("ja-JP"); }
+function pct(a, b){ return b > 0 ? (a / b * 100).toFixed(2) + "%" : "―"; }
+var toastT;
+function toast(msg, ms){ var t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove("show"); }, ms || 2200); }
+
+function parseDate(s){
+  s = hank(String(s || "").trim()).replace(/[．.\-年月]/g, "/").replace(/日/g, "");
+  var y = new Date().getFullYear(), m, d, a;
+  if (/^\d{8}$/.test(s)) { y = +s.slice(0,4); m = +s.slice(4,6); d = +s.slice(6,8); }
+  else if (/^\d{6}$/.test(s)) { y = 2000 + +s.slice(0,2); m = +s.slice(2,4); d = +s.slice(4,6); }
+  else if (/^\d{3,4}$/.test(s)) { m = +s.slice(0, s.length - 2); d = +s.slice(-2); }
+  else if ((a = s.split("/").filter(Boolean)).length === 3) { y = +a[0]; m = +a[1]; d = +a[2]; if (y < 100) y += 2000; }
+  else if (a.length === 2) { m = +a[0]; d = +a[1]; }
+  else return null;
+  var dt = new Date(y, m - 1, d);
+  if (dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+  return fmtD(dt);
+}
+function toDate(s){ var a = s.split("/"); return new Date(+a[0], +a[1]-1, +a[2]); }
+function xlDate(s){ var a = s.split("/"); return new Date(Date.UTC(+a[0], +a[1]-1, +a[2])); } // Excelに書く日付（時差でずれないように）
+// 鋳造ロット 261014 → 2026/10/14
+function lotDate(lot){ lot = String(lot || ""); if (!/^\d{6}$/.test(lot)) return null; return parseDate(lot); }
+
+function monthOf(ds){
+  var d = toDate(ds), y = d.getFullYear(), m = d.getMonth() + 1;
+  if (START > 1 && d.getDate() >= START) { m++; if (m > 12) { m = 1; y++; } }
+  return y + "年" + pad(m) + "月度";
+}
+function monthRange(label){
+  var y = +label.slice(0,4), m = +label.slice(5,7);
+  if (START <= 1) return [fmtD(new Date(y, m-1, 1)), fmtD(new Date(y, m, 0))];
+  return [fmtD(new Date(y, m-2, START)), fmtD(new Date(y, m-1, START-1))];
+}
+function monthsBack(n){
+  var out = [], cur = monthOf(today()), y = +cur.slice(0,4), m = +cur.slice(5,7);
+  for (var i = 0; i < n; i++) { out.push(y + "年" + pad(m) + "月度"); m--; if (m < 1) { m = 12; y--; } }
+  return out;
+}
+function fillMonthSelect(sel, n, extra){
+  var v = sel.value, ms = monthsBack(n || 12);
+  sel.innerHTML = (extra || "") + ms.map(function(m){ var r = monthRange(m); return '<option value="' + m + '">' + m + "（" + r[0].slice(5) + "〜" + r[1].slice(5) + "）</option>"; }).join("");
+  if (v && sel.querySelector('option[value="' + v + '"]')) sel.value = v; else sel.value = monthOf(today());
+}
+
+function allRecs(includeDel){
+  return Object.keys(DB.recs).map(function(k){ return DB.recs[k]; })
+    .filter(function(r){ return includeDel || !r.deleted; })
+    .sort(function(a, b){ return a.date === b.date ? (a.createdAt < b.createdAt ? -1 : 1) : (a.date < b.date ? -1 : 1); });
+}
+function H(h){ return String(h || "").trim().toUpperCase(); }
+function findHinban(h){
+  h = H(h);
+  var m = DB.master.hinban;
+  for (var i = 0; i < m.length; i++) if (H(m[i].hinban) === h) return m[i];
+  return null;
+}
+function hinbanList(){ return DB.master.hinban; }
+function kubunOf(h){ var m = findHinban(h); return m && m.kubun ? m.kubun : "その他向け"; }
+// 単価：未加工は素材単価だけ、半ペタ・完成は素材単価＋加工単価
+function calcTanka(hinban, jotai){
+  var m = findHinban(hinban);
+  if (!m || m.sozai === "" || m.sozai == null) return "";
+  var t = Number(m.sozai) || 0;
+  if (jotai !== "未加工") t += Number(m.kako) || 0;
+  return t;
+}
+
+// ---------------------------------------------------------------- ロット（生産数）
+function lotId(h, lot){ return H(h) + "|" + String(lot).trim(); }
+function appFuryo(){ // 品番|ロット → アプリで入れた不良数
+  var s = {};
+  allRecs().forEach(function(r){ var k = lotId(r.hinban, r.lot); s[k] = (s[k] || 0) + Number(r.qty || 0); });
+  return s;
+}
+function lotRows(){ // 生産数の表とアプリの記録を合わせる
+  var s = appFuryo(), rows = {};
+  Object.keys(DB.lots).forEach(function(k){
+    var l = DB.lots[k]; if (l.deleted) return;
+    rows[k] = {id: k, hinban: l.hinban, lot: l.lot, seisan: l.seisan === "" || l.seisan == null ? null : Number(l.seisan), past: Number(l.past || 0), app: 0};
+  });
+  Object.keys(s).forEach(function(k){
+    if (!rows[k]) { var a = k.split("|"); rows[k] = {id: k, hinban: a[0], lot: a[1], seisan: null, past: 0, app: 0}; }
+    rows[k].app = s[k];
+  });
+  Object.keys(rows).forEach(function(k){ var r = rows[k]; r.furyo = r.past + r.app; r.date = lotDate(r.lot); r.month = r.date ? monthOf(r.date) : ""; });
+  return rows;
+}
+function lotsOfHinban(h){
+  h = H(h);
+  var rows = lotRows();
+  return Object.keys(rows).map(function(k){ return rows[k]; }).filter(function(r){ return H(r.hinban) === h && r.lot !== "不明"; })
+    .sort(function(a, b){ return a.lot < b.lot ? 1 : -1; });
+}
+
+// ---------------------------------------------------------------- 画面の切り替え
+var curTab = VIEW ? "rate" : "input";
+function showTab(t){
+  curTab = t;
+  document.querySelectorAll("#tabs button").forEach(function(b){ b.classList.toggle("on", b.dataset.tab === t); });
+  ["input","rate","list","sum","set"].forEach(function(n){ $("tab-" + n).classList.toggle("hidden", n !== t); });
+  render();
+  if (t === "input") setTimeout(function(){ $("f-hinban").focus(); }, 50);
+}
+function render(){
+  if (curTab === "input") { renderDay(); renderHinbanChips(); }
+  else if (curTab === "rate") renderRate();
+  else if (curTab === "list") renderList();
+  else if (curTab === "sum") renderSum();
+  else if (curTab === "set") renderSet();
+}
+document.querySelectorAll("#tabs button").forEach(function(b){ b.onclick = function(){ showTab(b.dataset.tab); }; });
+
+// ---------------------------------------------------------------- 入力フォーム
+var F = { men: "", jotai: "" };
+var editId = null, menAuto = false;
+var ORDER = ["f-date","f-hinban","f-naiyo","f-bui","g-men","g-jotai","f-lot","f-qty","f-biko","btnSave"];
+
+function applyKeyboardMode(){
+  var on = pget(PREF.kb, true);
+  $("set-kb").checked = on;
+  document.querySelectorAll("input[data-kb]").forEach(function(el){
+    if (on) el.setAttribute("inputmode", "none");
+    else el.setAttribute("inputmode", el.hasAttribute("data-num") ? "numeric" : "text");
+  });
+  $("kbhint").classList.toggle("hidden", !on);
+}
+function setSeg(f, v, auto){
+  F[f] = v;
+  document.querySelectorAll("#g-" + f + " button").forEach(function(b){ b.classList.toggle("on", b.dataset.v === v); });
+  if (f === "men") { menAuto = !!auto; if (!auto) $("i-men").textContent = ""; }
+  updKingaku();
+}
+document.querySelectorAll(".seg button").forEach(function(b){
+  b.onclick = function(){ var g = b.parentNode; setSeg(g.dataset.f, b.dataset.v); next(g.id); };
+});
+function next(id){
+  var i = ORDER.indexOf(id);
+  var el = $(ORDER[Math.min(i + 1, ORDER.length - 1)]);
+  if (el) { el.focus(); if (el.select && el.tagName === "INPUT") el.select(); var r = el.getBoundingClientRect(); if (r.top < 120 || r.bottom > window.innerHeight - 40) el.scrollIntoView({block: "center", behavior: "smooth"}); }
+}
+[["men", MEN], ["jotai", JOTAI]].forEach(function(p){
+  var f = p[0], vals = p[1], g = $("g-" + f);
+  g.addEventListener("keydown", function(e){
+    var n = parseInt(hank(e.key), 10);
+    if (n >= 1 && n <= vals.length) { e.preventDefault(); setSeg(f, vals[n-1]); next(g.id); }
+    else if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); var i = vals.indexOf(F[f]); i = e.key === "ArrowLeft" ? Math.max(0, i - 1) : Math.min(vals.length - 1, i + 1); setSeg(f, vals[i]); }
+    else if (e.key === "Enter") { e.preventDefault(); if (F[f]) next(g.id); else toast("数字キーで選んでください"); }
+  });
+});
+
+// --- 候補
+function naiyoCounts(h){
+  var c = {}; h = H(h);
+  (DB.master.furyo || []).forEach(function(f){ c[f.name] = (c[f.name] || 0) + Number(f.count || 0) / 1000; });
+  allRecs().forEach(function(r){ c[r.naiyo] = (c[r.naiyo] || 0) + (H(r.hinban) === h ? 5 : 1); });
+  return c;
+}
+function buiStats(h){ // 部位 → {n, ka, so}
+  h = H(h); var o = {};
+  (DB.master.bui || []).forEach(function(b){ if (H(b.hinban) !== h) return; var x = o[b.bui] = o[b.bui] || {n: 0, ka: 0, so: 0}; x.ka += Number(b.ka || 0); x.so += Number(b.so || 0); x.n += Number(b.ka || 0) + Number(b.so || 0); });
+  allRecs().forEach(function(r){ if (H(r.hinban) !== h || !r.bui) return; var x = o[r.bui] = o[r.bui] || {n: 0, ka: 0, so: 0}; x.n += 3; if (r.men === "加工面") x.ka += 3; else if (r.men === "素材面") x.so += 3; });
+  return o;
+}
+function sortedKeys(o, f){ return Object.keys(o).filter(Boolean).sort(function(a, b){ return f(o[b]) - f(o[a]); }); }
+function hinbanSug(q){
+  q = H(hank(q)).replace(/-/g, "");
+  if (!q) return [];
+  var items = hinbanList().map(function(m){ return {v: m.hinban, sub: [m.seiki !== m.hinban ? m.seiki : "", m.kubun].filter(Boolean).join("　"), key: H(m.hinban + " " + m.seiki).replace(/-/g, "")}; });
+  // 「2364H」のように打っても見つかるように、数字と最後の英字で照合
+  var digits = q.replace(/[^0-9]/g, ""), tail = q.replace(/[0-9]/g, "").replace(/^RD/, "");
+  return items.filter(function(it){
+    if (it.key.indexOf(q) >= 0) return true;
+    if (digits.length < 3) return false;
+    var at = it.key.indexOf(digits);
+    return at >= 0 && (!tail || it.key.slice(at).indexOf(tail.slice(-1)) >= 0);
+  }).slice(0, 12);
+}
+function sugSource(field){
+  var q = H(hank($("f-" + field).value)), h = $("f-hinban").value, items = [];
+  if (field === "hinban") return hinbanSug($("f-hinban").value);
+  if (field === "naiyo") { var c = naiyoCounts(h); items = sortedKeys(c, function(x){ return x; }).map(function(k){ return {v: k, sub: ""}; }); }
+  if (field === "bui") { var s = buiStats(h); items = sortedKeys(s, function(x){ return x.n; }).map(function(k){ var x = s[k]; return {v: k, sub: x.ka || x.so ? (x.ka >= x.so ? "加工面が多い" : "素材面が多い") : ""}; }); }
+  if (!q) return items.slice(0, 12);
+  var starts = items.filter(function(it){ return H(it.v).indexOf(q) === 0; });
+  var inc = items.filter(function(it){ return H(it.v).indexOf(q) > 0; });
+  return starts.concat(inc).slice(0, 12);
+}
+var sugIdx = {};
+function showSug(field){
+  var box = $("s-" + field), list = sugSource(field), q = $("f-" + field).value.trim();
+  if (!list.length || (list.length === 1 && list[0].v === q)) { box.classList.add("hidden"); return; }
+  sugIdx[field] = q ? 0 : -1;
+  box.innerHTML = list.map(function(it, i){ return '<div data-i="' + i + '" class="' + (i === sugIdx[field] ? "on" : "") + '">' + esc(it.v) + (it.sub ? "<small>" + esc(it.sub) + "</small>" : "") + "</div>"; }).join("");
+  box._list = list;
+  box.classList.remove("hidden");
+  box.querySelectorAll("div").forEach(function(d){ d.onmousedown = function(e){ e.preventDefault(); pick(field, list[+d.dataset.i].v); next("f-" + field); }; });
+}
+function hideSug(field){ $("s-" + field).classList.add("hidden"); }
+function pick(field, v){
+  $("f-" + field).value = v; hideSug(field);
+  if (field === "hinban") onHinban();
+  if (field === "bui") onBui();
+}
+function onLeave(field){ if (field === "hinban") onHinban(); if (field === "bui") onBui(); }
+["hinban","naiyo","bui"].forEach(function(field){
+  var el = $("f-" + field);
+  el.addEventListener("input", function(){ showSug(field); if (field === "hinban") onHinban(true); });
+  // 空のときは候補ボタン（チップ）を使う。↓キーで一覧も出せる
+  el.addEventListener("blur", function(){ setTimeout(function(){ if (document.activeElement === el) return; hideSug(field); onLeave(field); }, 120); });
+  el.addEventListener("keydown", function(e){
+    var box = $("s-" + field), open = !box.classList.contains("hidden"), list = box._list || [];
+    if (!open && e.key === "ArrowDown" && field !== "hinban") { e.preventDefault(); showSug(field); return; }
+    if (open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      e.preventDefault();
+      sugIdx[field] = e.key === "ArrowDown" ? Math.min(list.length - 1, sugIdx[field] + 1) : Math.max(-1, sugIdx[field] - 1);
+      box.querySelectorAll("div").forEach(function(d, i){ d.classList.toggle("on", i === sugIdx[field]); if (i === sugIdx[field]) d.scrollIntoView({block: "nearest"}); });
+    } else if (e.key === "Escape") { hideSug(field); }
+    else if (e.key === "Enter" && !e.isComposing) {
+      e.preventDefault();
+      if (open && sugIdx[field] >= 0 && list[sugIdx[field]]) pick(field, list[sugIdx[field]].v);
+      else { hideSug(field); onLeave(field); }
+      if (!el.value.trim()) { toast("入力してください"); return; }
+      next("f-" + field);
+    }
+  });
+});
+
+function onHinban(typing){
+  var el = $("f-hinban"), v = el.value.trim(), info = $("i-hinban");
+  if (!typing && v) {
+    v = H(hank(v)); el.value = v;
+    if (!findHinban(v)) { var s = hinbanSug(v); if (s.length === 1) { v = s[0].v; el.value = v; } }
+  }
+  var m = findHinban(v);
+  info.classList.remove("warn");
+  if (!v) info.textContent = "";
+  else if (m) info.textContent = [m.seiki, m.kubun].filter(Boolean).join("　");
+  else if (!typing) { info.textContent = "マスターにない品番です（このまま保存できます）"; info.classList.add("warn"); }
+  renderNaiyoChips(); renderBuiChips(); renderLotChips(); updKingaku();
+}
+function onBui(){
+  var b = $("f-bui").value.trim(); if (!b || editId) return;
+  var s = buiStats($("f-hinban").value)[b];
+  if (s && (s.ka || s.so) && (!F.men || menAuto)) {
+    var v = s.ka >= s.so ? "加工面" : "素材面";
+    setSeg("men", v, true);
+    $("i-men").textContent = "これまでの記録から「" + v + "」を選びました（違うときは押し直す）";
+  }
+}
+function chipBtns(el, arr, cls, onpick){
+  el.innerHTML = arr.map(function(v){ return '<button type="button" tabindex="-1" class="chip ' + (cls || "") + '">' + esc(v) + "</button>"; }).join("");
+  el.querySelectorAll("button").forEach(function(b, i){ b.onclick = function(){ onpick(arr[i]); }; });
+}
+function renderHinbanChips(){ // よく使う品番（最近の記録が多い順）
+  var c = {};
+  allRecs().slice(-300).forEach(function(r){ c[r.hinban] = (c[r.hinban] || 0) + 1; });
+  var a = sortedKeys(c, function(x){ return x; });
+  hinbanList().forEach(function(m){ if (a.length < 6 && a.indexOf(m.hinban) < 0) a.push(m.hinban); });
+  chipBtns($("c-hinban"), a.slice(0, 8), "", function(v){ pick("hinban", v); next("f-hinban"); });
+}
+function renderNaiyoChips(){
+  var c = naiyoCounts($("f-hinban").value);
+  chipBtns($("c-naiyo"), sortedKeys(c, function(x){ return x; }).slice(0, 12), "", function(v){ pick("naiyo", v); next("f-naiyo"); });
+}
+function renderBuiChips(){
+  var h = $("f-hinban").value, s = buiStats(h), a = sortedKeys(s, function(x){ return x.n; }).slice(0, 10);
+  var m = findHinban(h), zu = m && m.zu && PHOTOS[m.zu];
+  var el = $("c-bui");
+  chipBtns(el, a, "", function(v){ pick("bui", v); next("f-bui"); });
+  if (zu) {
+    var b = document.createElement("button"); b.type = "button"; b.tabIndex = -1; b.className = "chip photo"; b.textContent = "写真で選ぶ";
+    b.onclick = function(){ photoPicker(m.zu); };
+    el.insertBefore(b, el.firstChild);
+  }
+}
+function photoPicker(zu){
+  var g = PHOTOS[zu]; if (!g) return;
+  var cur = $("f-bui").value.trim();
+  var wrap = document.createElement("div"); wrap.className = "modal";
+  wrap.innerHTML = '<div class="box wide"><h3>部位を写真で選ぶ　<span class="muted">' + esc(g.title) + '</span></h3><div class="photos">' +
+    g.items.map(function(it, i){ return '<button data-i="' + i + '" class="' + (it.bui === cur ? "on" : "") + '"><img src="' + it.src + '" alt=""><span>' + esc(it.bui) + "</span></button>"; }).join("") +
+    '</div><div class="mrow"><button class="big sub">閉じる</button></div></div>';
+  document.body.appendChild(wrap);
+  function close(){ document.body.removeChild(wrap); }
+  wrap.querySelector(".mrow button").onclick = close;
+  wrap.onclick = function(e){ if (e.target === wrap) close(); };
+  wrap.querySelectorAll(".photos button").forEach(function(b){ b.onclick = function(){ close(); pick("bui", g.items[+b.dataset.i].bui); next("f-bui"); }; });
+}
+function renderLotChips(){
+  var lots = lotsOfHinban($("f-hinban").value).slice(0, 6).map(function(r){ return r.lot; });
+  chipBtns($("c-lot"), lots, "lot", function(v){ $("f-lot").value = v; onLot(); next("f-lot"); });
+}
+function onLot(){
+  var lot = hank($("f-lot").value.trim()); $("f-lot").value = lot;
+  var info = $("i-lot"), h = $("f-hinban").value;
+  info.classList.remove("warn");
+  if (!lot || lot === "不明") { info.textContent = ""; return; }
+  if (!/^\d{6}$/.test(lot)) { info.textContent = "ロットは6けた（例 261014）が基本です"; info.classList.add("warn"); return; }
+  var r = lotRows()[lotId(h, lot)];
+  if (r && r.seisan) info.textContent = "生産数 " + num(r.seisan) + "　これまでの不良 " + r.furyo + "（" + pct(r.furyo, r.seisan) + "）";
+  else if (r) info.textContent = "これまでの不良 " + r.furyo + "（生産数は未入力）";
+  else info.textContent = "このロットの記録はまだありません";
+}
+function updKingaku(){
+  var t = calcTanka($("f-hinban").value, F.jotai), q = Number($("f-qty").value) || 0;
+  $("i-kingaku").textContent = (t !== "" && F.jotai) ? "金額 " + yen(t * q) : "";
+}
+
+// 確認日
+function setDate(ds){ $("f-date").value = ds; $("i-date").textContent = monthOf(ds); renderDay(); }
+$("f-date").addEventListener("keydown", function(e){
+  if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); var d = parseDate(this.value); if (!d) { toast("日付が読めません（例：1022）"); return; } setDate(d); next("f-date"); }
+});
+$("f-date").addEventListener("blur", function(){ var d = parseDate(this.value); if (d) setDate(d); });
+$("dPrev").onclick = function(){ var d = toDate(parseDate($("f-date").value) || today()); d.setDate(d.getDate() - 1); setDate(fmtD(d)); };
+$("dToday").onclick = function(){ setDate(today()); };
+
+$("lotUnknown").onclick = function(){ $("f-lot").value = "不明"; onLot(); next("f-lot"); };
+$("f-lot").addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); onLot(); if (!this.value.trim()) { toast("鋳造ロットを入れてください（分からないときは「不明」）"); return; } next("f-lot"); } });
+$("f-lot").addEventListener("blur", onLot);
+function normQty(el){ el.value = hank(el.value).replace(/[^\d]/g, ""); }
+$("f-qty").addEventListener("input", function(){ normQty(this); updKingaku(); });
+$("f-qty").addEventListener("keydown", function(e){
+  if (e.key === "Enter") { e.preventDefault(); normQty(this); if (!(+this.value > 0)) { toast("数量を入れてください"); return; } next("f-qty"); }
+  else if (e.key === "ArrowUp" || e.key === "+") { e.preventDefault(); this.value = (+this.value || 0) + 1; updKingaku(); }
+  else if (e.key === "ArrowDown" || e.key === "-") { e.preventDefault(); this.value = Math.max(1, (+this.value || 0) - 1); updKingaku(); }
+});
+$("qPlus").onclick = function(){ $("f-qty").value = (+$("f-qty").value || 0) + 1; updKingaku(); };
+$("qMinus").onclick = function(){ $("f-qty").value = Math.max(1, (+$("f-qty").value || 0) - 1); updKingaku(); };
+$("f-biko").addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); next("f-biko"); } });
+$("btnSave").onclick = saveForm;
+$("btnClear").onclick = function(){ clearForm(true); };
+$("cancelEdit").onclick = function(){ clearForm(true); };
+$("btnDelete").onclick = function(){ if (editId) deleteRec(editId); };
+
+function clearForm(all){
+  editId = null;
+  // 品番は残す（同じ品番を続けて入れることが多いため）。「入力を消す」では品番も消す
+  var ids = ["f-naiyo","f-bui","f-lot","f-biko"];
+  if (all) ids.push("f-hinban");
+  ids.forEach(function(id){ $(id).value = ""; });
+  $("f-qty").value = "1"; setSeg("men", ""); setSeg("jotai", "");
+  ["i-men","i-kingaku","i-lot"].forEach(function(id){ $(id).textContent = ""; });
+  $("editbar").classList.add("hidden"); $("btnDelete").classList.add("hidden"); $("btnSave").textContent = "保存";
+  if (!parseDate($("f-date").value)) setDate(today());
+  onHinban(!$("f-hinban").value);
+  (all || !$("f-hinban").value ? $("f-hinban") : $("f-naiyo")).focus();
+}
+
+function saveForm(){
+  if (VIEW) return;
+  var user = $("user").value;
+  var r = {
+    date: parseDate($("f-date").value), hinban: H(hank($("f-hinban").value)), naiyo: $("f-naiyo").value.trim(), bui: $("f-bui").value.trim(),
+    men: F.men, jotai: F.jotai, lot: hank($("f-lot").value.trim()), qty: parseInt($("f-qty").value, 10) || 0, biko: $("f-biko").value.trim()
+  };
+  var miss = [];
+  if (!user) miss.push(["作業者（右上）", "user"]);
+  if (!r.date) miss.push(["確認日", "f-date"]);
+  if (!r.hinban) miss.push(["品番", "f-hinban"]);
+  if (!r.naiyo) miss.push(["不良内容", "f-naiyo"]);
+  if (!r.bui) miss.push(["部位", "f-bui"]);
+  if (!r.men) miss.push(["加工面／素材面", "g-men"]);
+  if (!r.jotai) miss.push(["状態", "g-jotai"]);
+  if (!r.lot) miss.push(["鋳造ロット", "f-lot"]);
+  if (!(r.qty > 0)) miss.push(["数量", "f-qty"]);
+  if (miss.length) { toast("入っていません：" + miss.map(function(m){ return m[0]; }).join("・"), 3000); $(miss[0][1]).focus(); return; }
+
+  if (!editId) {
+    var dup = allRecs().filter(function(x){ return x.date === r.date && x.hinban === r.hinban && x.naiyo === r.naiyo && x.bui === r.bui && x.lot === r.lot && x.men === r.men && x.jotai === r.jotai; })[0];
+    if (dup && confirm("同じ日に同じ内容（" + r.hinban + "・" + r.naiyo + "・" + r.bui + "・ロット " + r.lot + "）が " + dup.qty + " 個あります。\n\nOK：数量を足す（" + dup.qty + "＋" + r.qty + "）\nキャンセル：別の行として登録する")) {
+      editId = dup.id; r.qty = Number(dup.qty) + r.qty; if (!r.biko) r.biko = dup.biko;
+    }
+  }
+  var old = editId ? DB.recs[editId] : null;
+  var rec = Object.assign({}, old || {}, r);
+  var m = findHinban(r.hinban);
+  rec.id = old ? old.id : uid();
+  rec.month = monthOf(r.date);
+  rec.seiki = m ? (m.seiki || r.hinban) : r.hinban;
+  rec.tanka = calcTanka(r.hinban, r.jotai);
+  rec.kingaku = rec.tanka === "" ? "" : rec.tanka * r.qty;
+  rec.user = old && old.user ? old.user : user;
+  rec.createdAt = old ? old.createdAt : nowIso();
+  rec.updatedAt = nowIso();
+  rec.deleted = false;
+  DB.recs[rec.id] = rec;
+  if (DB.out.indexOf(rec.id) < 0) DB.out.push(rec.id);
+  persist();
+  toast((old ? "修正しました：" : "保存しました：") + rec.hinban + "　" + rec.naiyo + "　" + rec.qty + "個");
+  clearForm(false);
+  renderDay();
+  syncSoon();
+}
+
+function editRec(id){
+  if (VIEW) return;
+  var r = DB.recs[id]; if (!r) return;
+  showTab("input");
+  editId = id;
+  setDate(r.date);
+  $("f-hinban").value = r.hinban; onHinban();
+  $("f-naiyo").value = r.naiyo; $("f-bui").value = r.bui || "";
+  setSeg("men", r.men); setSeg("jotai", r.jotai);
+  $("f-lot").value = r.lot || ""; $("f-qty").value = r.qty; $("f-biko").value = r.biko || "";
+  onLot(); updKingaku();
+  $("editbar").classList.remove("hidden"); $("btnDelete").classList.remove("hidden"); $("btnSave").textContent = "修正を保存";
+  window.scrollTo({top: 0, behavior: "smooth"});
+  setTimeout(function(){ $("f-hinban").focus(); }, 80);
+}
+function adminCheck(title){
+  return askText(title, "管理者パスワードを入れてください", true).then(function(pin){
+    if (pin == null) return false;
+    if (String(pin) !== String(CFG.adminPin)) { toast("パスワードが違います"); return false; }
+    return true;
+  });
+}
+function deleteRec(id){
+  adminCheck("記録の削除").then(function(ok){
+    if (!ok) return;
+    var r = DB.recs[id]; r.deleted = true; r.updatedAt = nowIso();
+    if (DB.out.indexOf(id) < 0) DB.out.push(id);
+    persist(); toast("削除しました"); clearForm(true); renderDay(); syncSoon();
+  });
+}
+
+// この日の入力
+var HEAD = '<th class="c">加工面</th><th class="c">素材面</th><th class="c">未</th><th class="c">半</th><th class="c">完</th><th>鋳造ロット</th><th class="r">数量</th><th>作業者</th><th>備考</th><th></th>';
+function rowHtml(r, withDate){
+  return '<tr class="click' + (r.deleted ? " del" : "") + '" data-id="' + esc(r.id) + '">' +
+    (withDate ? "<td>" + esc(r.date.slice(5)) + "</td>" : "") +
+    "<td>" + esc(r.hinban) + "</td><td>" + esc(r.naiyo) + "</td><td>" + esc(r.bui) + "</td>" +
+    '<td class="c">' + (r.men === "加工面" ? '<span class="tag ka">○</span>' : "") + '</td><td class="c">' + (r.men === "素材面" ? '<span class="tag so">○</span>' : "") + "</td>" +
+    '<td class="c">' + (r.jotai === "未加工" ? "○" : "") + '</td><td class="c">' + (r.jotai === "半ペタ" ? "○" : "") + '</td><td class="c">' + (r.jotai === "完成" ? "○" : "") + "</td>" +
+    "<td>" + esc(r.lot) + '</td><td class="r">' + esc(r.qty) + "</td><td>" + esc(r.user) + "</td><td>" + esc(r.biko) + "</td>" +
+    "<td>" + (DB.out.indexOf(r.id) >= 0 ? '<span class="tag wait">未送信</span>' : "") + "</td></tr>";
+}
+function bindRows(tbl){ tbl.querySelectorAll("tr.click").forEach(function(tr){ tr.onclick = function(){ editRec(tr.dataset.id); }; }); }
+function renderDay(){
+  var d = parseDate($("f-date").value) || today();
+  var list = allRecs().filter(function(r){ return r.date === d; });
+  var q = list.reduce(function(s, r){ return s + Number(r.qty || 0); }, 0);
+  $("dayCount").textContent = d + "　" + list.length + "行・" + q + "個";
+  $("dayTable").innerHTML = list.length ? "<tr><th>品番</th><th>不良内容</th><th>部位</th>" + HEAD + "</tr>" + list.map(function(r){ return rowHtml(r, false); }).join("") : '<tr><td class="muted">まだありません</td></tr>';
+  bindRows($("dayTable"));
+}
+
+// ---------------------------------------------------------------- 生産数・不良率
+function hinbanInput(inputId, boxId, onDone){ // 品番入力欄（候補つき）
+  var el = $(inputId), box = $(boxId), idx = 0, list = [];
+  function show(){
+    list = hinbanSug(el.value);
+    if (!list.length) { box.classList.add("hidden"); return; }
+    idx = 0;
+    box.innerHTML = list.map(function(it, i){ return '<div class="' + (i === 0 ? "on" : "") + '">' + esc(it.v) + "<small>" + esc(it.sub) + "</small></div>"; }).join("");
+    box.classList.remove("hidden");
+    box.querySelectorAll("div").forEach(function(d, i){ d.onmousedown = function(e){ e.preventDefault(); el.value = list[i].v; box.classList.add("hidden"); onDone(true); }; });
+  }
+  el.addEventListener("input", show);
+  el.addEventListener("blur", function(){ setTimeout(function(){ box.classList.add("hidden"); }, 150); });
+  el.addEventListener("keydown", function(e){
+    var open = !box.classList.contains("hidden");
+    if (open && (e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); idx = e.key === "ArrowDown" ? Math.min(list.length - 1, idx + 1) : Math.max(0, idx - 1); box.querySelectorAll("div").forEach(function(d, i){ d.classList.toggle("on", i === idx); }); }
+    else if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); if (open && list[idx]) el.value = list[idx].v; else el.value = H(hank(el.value)); box.classList.add("hidden"); onDone(true); }
+  });
+}
+hinbanInput("p-hinban", "s-phinban", function(go){
+  var m = findHinban($("p-hinban").value);
+  $("i-phinban").textContent = m ? [m.seiki, m.kubun].join("　") : ($("p-hinban").value ? "マスターにない品番です" : "");
+  if (go) $("p-lot").focus();
+});
+hinbanInput("r-hinban", "s-rhinban", function(){ renderRate(); });
+$("p-lot").addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); showPLot(); $("p-seisan").focus(); } });
+$("p-lot").addEventListener("blur", showPLot);
+function showPLot(){
+  var lot = hank($("p-lot").value.trim()); $("p-lot").value = lot;
+  var r = lotRows()[lotId($("p-hinban").value, lot)];
+  $("i-plot").textContent = !lot ? "" : (r ? "登録済み：生産数 " + (r.seisan == null ? "未入力" : num(r.seisan)) + "　不良 " + r.furyo : "新しいロット") + (lotDate(lot) ? "　（" + lotDate(lot) + "・" + monthOf(lotDate(lot)) + "）" : "");
+}
+$("p-seisan").addEventListener("input", function(){ normQty(this); });
+$("p-seisan").addEventListener("keydown", function(e){ if (e.key === "Enter") { e.preventDefault(); saveLot(); } });
+$("btnLot").onclick = saveLot;
+function putLot(h, lot, seisan){
+  var id = lotId(h, lot), old = DB.lots[id];
+  DB.lots[id] = {id: id, hinban: H(h), lot: lot, seisan: seisan, past: old ? old.past : 0, user: $("user").value || "", updatedAt: nowIso(), deleted: false};
+  if (DB.lotOut.indexOf(id) < 0) DB.lotOut.push(id);
+  persist(); syncSoon();
+}
+function saveLot(){
+  var h = H(hank($("p-hinban").value)), lot = hank($("p-lot").value.trim()), s = parseInt($("p-seisan").value, 10);
+  if (!h || !lot || !(s > 0)) { toast("品番・鋳造ロット・生産数を入れてください"); return; }
+  putLot(h, lot, s);
+  toast("生産数を保存しました：" + h + "　" + lot + "　" + num(s));
+  $("p-lot").value = ""; $("p-seisan").value = ""; $("i-plot").textContent = ""; $("p-lot").focus();
+  $("r-hinban").value = h;
+  renderRate();
+}
+function editSeisan(id){
+  if (VIEW) return;
+  var r = lotRows()[id]; if (!r) return;
+  askText("生産数の修正", r.hinban + "　ロット " + r.lot + "（空欄にすると未入力）", false, r.seisan == null ? "" : String(r.seisan), true).then(function(v){
+    if (v == null) return;
+    var s = v === "" ? "" : parseInt(hank(v), 10);
+    if (v !== "" && !(s >= 0)) { toast("数字を入れてください"); return; }
+    putLot(r.hinban, r.lot, s); renderRate();
+  });
+}
+function fillKubun(sel){
+  var v = sel.value;
+  sel.innerHTML = '<option value="">区分すべて</option>' + KUBUN.map(function(k){ return "<option>" + k + "</option>"; }).join("");
+  sel.value = v || "";
+}
+function renderRate(){
+  fillKubun($("r-kubun"));
+  fillMonthSelect($("r-month"), 12);
+  var kb = $("r-kubun").value, mon = $("r-month").value, rows = lotRows();
+  var agg = {};
+  Object.keys(rows).forEach(function(k){
+    var r = rows[k];
+    if (r.month !== mon) return;
+    if (kb && kubunOf(r.hinban) !== kb) return;
+    var a = agg[r.hinban] = agg[r.hinban] || {lots: 0, seisan: 0, furyo: 0, furyoAll: 0, nos: 0};
+    a.lots++; a.furyoAll += r.furyo;
+    if (r.seisan) { a.seisan += r.seisan; a.furyo += r.furyo; } else a.nos++;
+  });
+  var rt = function(a){ return a.seisan ? a.furyo / a.seisan : 0; };
+  var keys = Object.keys(agg).sort(function(a, b){ return rt(agg[b]) - rt(agg[a]); });
+  var mx = Math.max.apply(null, keys.map(function(k){ return rt(agg[k]); }).concat([0.0001]));
+  var sel = H($("r-hinban").value), tS = 0, tF = 0;
+  $("r-summary").innerHTML = '<tr><th>品番</th><th>区分</th><th class="r">ロット数</th><th class="r">生産数</th><th class="r">不良数</th><th class="r">不良率</th><th style="min-width:140px"></th><th>生産数未入力</th></tr>' +
+    (keys.length ? keys.map(function(h){ var a = agg[h]; tS += a.seisan; tF += a.furyo;
+      return '<tr class="click' + (h === sel ? " sel" : "") + '" data-h="' + esc(h) + '"><td>' + esc(h) + "</td><td>" + esc(kubunOf(h)) + '</td><td class="r">' + a.lots + '</td><td class="r">' + num(a.seisan) + '</td><td class="r">' + num(a.furyo) + '</td><td class="r"><b>' + pct(a.furyo, a.seisan) + '</b></td><td><span class="bar rt" style="width:' + (rt(a) / mx * 140) + 'px"></span></td><td>' + (a.nos ? '<span class="tag wait">' + a.nos + "ロット（不良 " + (a.furyoAll - a.furyo) + "）</span>" : "") + "</td></tr>"; }).join("") +
+      '<tr><td colspan="3"><b>合計</b></td><td class="r"><b>' + num(tS) + '</b></td><td class="r"><b>' + num(tF) + '</b></td><td class="r"><b>' + pct(tF, tS) + '</b></td><td colspan="2"></td></tr>'
+      : '<tr><td class="muted">この月度に鋳造したロットの記録はありません</td></tr>');
+  $("r-summary").querySelectorAll("tr.click").forEach(function(tr){ tr.onclick = function(){ $("r-hinban").value = tr.dataset.h; renderRate(); $("r-lottitle").scrollIntoView({behavior: "smooth"}); }; });
+  // ロットの表
+  var lots = sel ? lotsOfHinban(sel) : [];
+  if (!$("r-all").checked) lots = lots.filter(function(r){ return r.month === mon; });
+  $("r-lottitle").textContent = "ロットごと" + (sel ? "　" + sel : "");
+  var s1 = 0, f1 = 0;
+  lots.forEach(function(r){ if (r.seisan) { s1 += r.seisan; f1 += r.furyo; } });
+  $("r-info").textContent = sel ? lots.length + "ロット　生産数 " + num(s1) + "　不良 " + num(f1) + "　不良率 " + pct(f1, s1) + (VIEW ? "" : "（生産数を押すと直せます）") : "品番を選んでください";
+  var mx2 = Math.max.apply(null, lots.map(function(r){ return r.seisan ? r.furyo / r.seisan : 0; }).concat([0.0001]));
+  $("r-lots").innerHTML = sel ? '<tr><th>ロット</th><th>鋳造日</th><th class="r">生産数</th><th class="r">不良数</th><th class="r">うちアプリ</th><th class="r">不良率</th><th style="min-width:140px"></th></tr>' +
+    (lots.length ? lots.map(function(r){ var x = r.seisan ? r.furyo / r.seisan : 0;
+      return "<tr><td>" + esc(r.lot) + "</td><td>" + esc(r.date || "") + '</td><td class="r click" data-id="' + esc(r.id) + '" style="cursor:pointer;text-decoration:underline dotted">' + (r.seisan == null ? '<span class="tag wait">未入力</span>' : num(r.seisan)) + '</td><td class="r">' + r.furyo + '</td><td class="r muted">' + (r.app || "") + '</td><td class="r"><b>' + (r.seisan ? pct(r.furyo, r.seisan) : "―") + '</b></td><td><span class="bar rt" style="width:' + (x / mx2 * 140) + 'px"></span></td></tr>'; }).join("")
+      : '<tr><td colspan="7" class="muted">ロットがありません（「全部のロットを表示」で過去も見られます）</td></tr>') : "";
+  $("r-lots").querySelectorAll("td.click").forEach(function(td){ td.onclick = function(){ editSeisan(td.dataset.id); }; });
+}
+["r-kubun","r-month","r-all"].forEach(function(id){ $(id).onchange = renderRate; });
+
+// ---------------------------------------------------------------- 一覧・確認
+function renderList(){
+  fillMonthSelect($("l-month"), 12);
+  var mon = $("l-month").value, q = H($("l-q").value.trim()), mn = $("l-men").value, showDel = $("l-del").checked;
+  var list = allRecs(showDel).filter(function(r){
+    if (r.month !== mon) return false;
+    if (mn && r.men !== mn) return false;
+    if (q && H(r.hinban + " " + r.naiyo + " " + r.lot + " " + r.bui).indexOf(q) < 0) return false;
+    return true;
+  });
+  var byDay = {};
+  list.forEach(function(r){ (byDay[r.date] = byDay[r.date] || []).push(r); });
+  var days = Object.keys(byDay).sort().reverse();
+  var tq = list.filter(function(r){ return !r.deleted; }).reduce(function(s, r){ return s + Number(r.qty || 0); }, 0);
+  $("l-info").textContent = list.length + "行・" + tq + "個" + (VIEW ? "" : "（行を押すと修正できます）");
+  var h = "<tr><th>確認日</th><th>品番</th><th>不良内容</th><th>部位</th>" + HEAD + "</tr>";
+  days.forEach(function(d){
+    var c = DB.confs[d];
+    var dq = byDay[d].filter(function(r){ return !r.deleted; }).reduce(function(s, r){ return s + Number(r.qty || 0); }, 0);
+    h += '<tr class="dayhead"><td colspan="14">' + d + "　" + dq + "個　" +
+      (c ? '<span class="tag ok">確認済み ' + esc(c.by) + "</span> " + esc(c.comment || "") : '<span class="tag wait">未確認</span>') +
+      (VIEW ? "" : ' <button class="sbtn" data-conf="' + d + '">記録確認（監督者）</button>') + "</td></tr>";
+    h += byDay[d].map(function(r){ return rowHtml(r, true); }).join("");
+  });
+  $("listTable").innerHTML = days.length ? h : '<tr><td class="muted">この月度の記録はありません</td></tr>';
+  bindRows($("listTable"));
+  $("listTable").querySelectorAll("[data-conf]").forEach(function(b){ b.onclick = function(e){ e.stopPropagation(); confirmDay(b.dataset.conf); }; });
+}
+["l-month","l-men","l-del"].forEach(function(id){ $(id).onchange = renderList; });
+$("l-q").oninput = renderList;
+function confirmDay(d){
+  var sup = (CFG.supervisors || []).join("・");
+  askText("記録確認（" + d + "）", "確認者の名前" + (sup ? "（" + sup + "）" : ""), false, (DB.confs[d] || {}).by || "").then(function(by){
+    if (!by) return;
+    askText("記録確認（" + d + "）", "コメント（なくてもよい）", false, (DB.confs[d] || {}).comment || "").then(function(cm){
+      if (cm == null) return;
+      DB.confs[d] = {date: d, by: by, comment: cm || "", at: nowIso()};
+      if (DB.confOut.indexOf(d) < 0) DB.confOut.push(d);
+      persist(); renderList(); syncSoon(); toast("確認しました");
+    });
+  });
+}
+
+// ---------------------------------------------------------------- 集計（確認日で）
+function aggregate(list){
+  var A = {qty: 0, ka: 0, so: 0, kin: 0, hasKin: false, hin: {}, nai: {}, cross: {}, bui: {}};
+  list.forEach(function(r){
+    var q = Number(r.qty || 0), k = r.kingaku === "" || r.kingaku == null ? 0 : Number(r.kingaku);
+    if (r.kingaku !== "" && r.kingaku != null) A.hasKin = true;
+    var f = r.men === "加工面" ? "ka" : "so";
+    A.qty += q; A.kin += k; A[f] += q;
+    var h = A.hin[r.hinban] = A.hin[r.hinban] || {ka: 0, so: 0, kin: 0}; h[f] += q; h.kin += k;
+    var n = A.nai[r.naiyo] = A.nai[r.naiyo] || {ka: 0, so: 0, kin: 0}; n[f] += q; n.kin += k;
+    var c = A.cross[r.hinban] = A.cross[r.hinban] || {}; c[r.naiyo] = (c[r.naiyo] || 0) + q;
+    var bk = r.hinban + "\t" + r.bui, b = A.bui[bk] = A.bui[bk] || {ka: 0, so: 0, nai: {}}; b[f] += q; b.nai[r.naiyo] = (b.nai[r.naiyo] || 0) + q;
+  });
+  return A;
+}
+function renderSum(){
+  fillMonthSelect($("s-month"), 12);
+  fillKubun($("s-kubun"));
+  var mon = $("s-month").value, kb = $("s-kubun").value, rg = monthRange(mon);
+  $("s-range").textContent = "確認日 " + rg[0] + "〜" + rg[1];
+  var list = allRecs().filter(function(r){ return r.month === mon && (!kb || kubunOf(r.hinban) === kb); });
+  var A = aggregate(list);
+  $("kpis").innerHTML =
+    '<div class="kpi"><div class="l">不良数</div><div class="v">' + num(A.qty) + "<small> 個</small></div></div>" +
+    '<div class="kpi"><div class="l">加工面で見つかった</div><div class="v" style="color:var(--ka)">' + num(A.ka) + "<small> 個</small></div></div>" +
+    '<div class="kpi"><div class="l">素材面で見つかった</div><div class="v" style="color:var(--so)">' + num(A.so) + "<small> 個</small></div></div>" +
+    '<div class="kpi"><div class="l">品番の数</div><div class="v">' + Object.keys(A.hin).length + "</div></div>" +
+    (A.hasKin ? '<div class="kpi"><div class="l">金額</div><div class="v">' + yen(A.kin) + "</div></div>" : "");
+  function table(obj, label){
+    var keys = Object.keys(obj).sort(function(a, b){ return (obj[b].so + obj[b].ka) - (obj[a].so + obj[a].ka); });
+    var mx = Math.max.apply(null, keys.map(function(k){ return obj[k].so + obj[k].ka; }).concat([1]));
+    return "<tr><th>" + label + '</th><th class="r">加工面</th><th class="r">素材面</th><th class="r">計</th>' + (A.hasKin ? '<th class="r">金額</th>' : "") + '<th style="min-width:120px"></th></tr>' +
+      (keys.length ? keys.map(function(k){ var o = obj[k];
+        return "<tr><td>" + esc(k) + '</td><td class="r">' + o.ka + '</td><td class="r">' + o.so + '</td><td class="r"><b>' + (o.ka + o.so) + "</b></td>" + (A.hasKin ? '<td class="r">' + yen(o.kin) + "</td>" : "") + "<td>" +
+          '<span class="bar ka" style="width:' + (o.ka / mx * 120) + 'px"></span><span class="bar so" style="width:' + (o.so / mx * 120) + 'px"></span></td></tr>'; }).join("") : '<tr><td colspan="6" class="muted">記録なし</td></tr>');
+  }
+  $("t-hinban").innerHTML = table(A.hin, "品番");
+  $("t-naiyo").innerHTML = table(A.nai, "不良内容");
+  var nt = {};
+  Object.keys(A.cross).forEach(function(h){ Object.keys(A.cross[h]).forEach(function(n){ nt[n] = (nt[n] || 0) + A.cross[h][n]; }); });
+  var nk = Object.keys(nt).sort(function(a, b){ return nt[b] - nt[a]; }).slice(0, 12);
+  var hk = Object.keys(A.cross).sort(function(a, b){ return (A.hin[b].ka + A.hin[b].so) - (A.hin[a].ka + A.hin[a].so); });
+  $("t-cross").innerHTML = hk.length ? "<tr><th>品番</th>" + nk.map(function(n){ return '<th class="r">' + esc(n) + "</th>"; }).join("") + '<th class="r">計</th></tr>' +
+    hk.map(function(h){ var tot = A.hin[h].ka + A.hin[h].so; return "<tr><td>" + esc(h) + "</td>" + nk.map(function(n){ var v = A.cross[h][n] || 0; return '<td class="r"' + (v ? ' style="background:rgba(179,84,30,' + Math.min(.5, .06 + v / Math.max(1, tot) * .6).toFixed(2) + ')"' : "") + ">" + (v || "") + "</td>"; }).join("") + '<td class="r"><b>' + tot + "</b></td></tr>"; }).join("")
+    : '<tr><td class="muted">記録なし</td></tr>';
+  var hf = H($("s-hinban").value);
+  var bk = Object.keys(A.bui).filter(function(k){ return !hf || H(k.split("\t")[0]).indexOf(hf) >= 0; }).sort(function(a, b){ return (A.bui[b].ka + A.bui[b].so) - (A.bui[a].ka + A.bui[a].so); }).slice(0, 25);
+  $("t-bui").innerHTML = bk.length ? '<tr><th>品番</th><th>部位</th><th class="r">加工面</th><th class="r">素材面</th><th class="r">計</th><th>主な不良内容</th></tr>' +
+    bk.map(function(k){ var b = A.bui[k], p = k.split("\t"); var top = Object.keys(b.nai).sort(function(x, y){ return b.nai[y] - b.nai[x]; }).slice(0, 3).map(function(n){ return n + " " + b.nai[n]; }).join("、");
+      return "<tr><td>" + esc(p[0]) + "</td><td>" + esc(p[1]) + '</td><td class="r">' + b.ka + '</td><td class="r">' + b.so + '</td><td class="r"><b>' + (b.ka + b.so) + "</b></td><td>" + esc(top) + "</td></tr>"; }).join("")
+    : '<tr><td class="muted">記録なし</td></tr>';
+  var ms = monthsBack(6).reverse();
+  var tr = ms.map(function(m){ return {m: m, A: aggregate(allRecs().filter(function(r){ return r.month === m && (!kb || kubunOf(r.hinban) === kb); }))}; });
+  var mx = Math.max.apply(null, tr.map(function(t){ return t.A.qty; }).concat([1]));
+  $("t-trend").innerHTML = '<tr><th>月度</th><th class="r">加工面</th><th class="r">素材面</th><th class="r">計</th><th style="min-width:160px"></th></tr>' +
+    tr.map(function(t){ return "<tr><td>" + t.m + '</td><td class="r">' + t.A.ka + '</td><td class="r">' + t.A.so + '</td><td class="r"><b>' + t.A.qty + "</b></td><td>" +
+      '<span class="bar ka" style="width:' + (t.A.ka / mx * 160) + 'px"></span><span class="bar so" style="width:' + (t.A.so / mx * 160) + 'px"></span></td></tr>'; }).join("");
+}
+["s-month","s-kubun"].forEach(function(id){ $(id).onchange = renderSum; });
+$("s-hinban").oninput = renderSum;
+
+// ---------------------------------------------------------------- 設定
+function renderSet(){
+  fillMonthSelect($("x-month"), 12, '<option value="all">全期間</option>');
+  var m = DB.master, nl = Object.keys(DB.lots).length;
+  $("m-info").textContent = "品番 " + m.hinban.length + "件／不良内容 " + m.furyo.length + "件／部位 " + m.bui.length + "件／生産数 " + num(nl) + "ロット" + (m.at.hinban ? "（" + String(m.at.hinban).slice(0, 10) + " 更新）" : "");
+  $("ver").textContent = APP_VER + (VIEW ? "（閲覧用）" : "") + "　この端末の記録 " + num(Object.keys(DB.recs).length) + "件";
+  renderSyncInfo();
+}
+$("set-kb").onchange = function(){ pset(PREF.kb, this.checked); applyKeyboardMode(); toast(this.checked ? "画面のキーボードを出しません" : "画面のキーボードを出します"); };
+
+function askText(title, label, password, initial, numeric){
+  return new Promise(function(resolve){
+    var kb = pget(PREF.kb, true);
+    var wrap = document.createElement("div");
+    wrap.className = "modal";
+    wrap.innerHTML = '<div class="box"><h3>' + esc(title) + '</h3><div class="muted">' + esc(label) + '</div><div class="fld"><input type="' + (password ? "password" : "text") + '" ' + (kb ? 'inputmode="none"' : ((password || numeric) ? 'inputmode="numeric"' : "")) + ' autocomplete="off" value="' + esc(initial || "") + '"></div><div class="mrow"><button class="big sub">やめる</button><button class="big">OK</button></div></div>';
+    document.body.appendChild(wrap);
+    var inp = wrap.querySelector("input"), bs = wrap.querySelectorAll("button");
+    function done(v){ document.body.removeChild(wrap); resolve(v); }
+    bs[0].onclick = function(){ done(null); };
+    bs[1].onclick = function(){ done(inp.value.trim()); };
+    inp.addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); done(inp.value.trim()); } if (e.key === "Escape") done(null); });
+    setTimeout(function(){ inp.focus(); inp.select(); }, 30);
+  });
+}
+
+// ---------------------------------------------------------------- Excel（ExcelJS）
+var excelReady = null;
+function loadExcel(){
+  if (window.ExcelJS) return Promise.resolve();
+  if (excelReady) return excelReady;
+  excelReady = new Promise(function(res, rej){
+    var s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
+    s.onload = res; s.onerror = function(){ excelReady = null; rej(new Error("Excelの部品を読み込めません（ネットにつないでください）")); };
+    document.head.appendChild(s);
+  });
+  return excelReady;
+}
+function cellText(v){
+  if (v == null) return "";
+  if (typeof v === "object") {
+    if (v instanceof Date) return fmtD(new Date(v.getTime() + v.getTimezoneOffset() * 60000));
+    if (v.richText) return v.richText.map(function(t){ return t.text; }).join("");
+    if ("result" in v) return cellText(v.result);
+    if (v.text) return String(v.text);
+    return "";
+  }
+  return String(v).trim();
+}
+function readSheet(ws, key){
+  if (!ws) return null;
+  var rows = [];
+  ws.eachRow({includeEmpty: false}, function(row){ var a = []; row.eachCell({includeEmpty: true}, function(c, i){ a[i] = cellText(c.value); }); rows.push(a); });
+  var hr = -1;
+  for (var i = 0; i < Math.min(rows.length, 10); i++) if (rows[i].indexOf(key) >= 0) { hr = i; break; }
+  if (hr < 0) return null;
+  var head = rows[hr], out = [];
+  for (var r = hr + 1; r < rows.length; r++) {
+    var o = {};
+    head.forEach(function(h, c){ if (h) o[String(h).trim()] = rows[r][c] || ""; });
+    if (o[key]) out.push(o);
+  }
+  return out;
+}
+function numOr(v, d){ v = String(v == null ? "" : v).replace(/[,円¥\s]/g, ""); return v === "" || isNaN(v) ? d : Number(v); }
+
+$("btnMaster").onclick = function(){
+  var f = $("m-file").files[0];
+  if (!f) { toast("先にExcel（.xlsx）を選んでください"); return; }
+  adminCheck("マスターの更新").then(function(ok){
+    if (!ok) return;
+    toast("読み込み中…", 5000);
+    loadExcel().then(function(){ return f.arrayBuffer(); }).then(function(buf){
+      var wb = new ExcelJS.Workbook();
+      return wb.xlsx.load(buf).then(function(){ return wb; });
+    }).then(function(wb){
+      var hin = readSheet(wb.getWorksheet("品番") || wb.worksheets[0], "品番");
+      if (!hin) { alert("シート「品番」に「品番」の見出しがありません。"); return; }
+      var at = nowIso(), msg = [];
+      DB.master.hinban = hin.map(function(o){ var h = H(o["品番"]); return {hinban: h, seiki: o["正式品番"] || h, kubun: o["区分"] || "その他向け", zu: o["部位図"] || "", last: o["最終確認日"] || "", sozai: numOr(o["素材単価"], ""), kako: numOr(o["加工単価"], "")}; });
+      DB.master.at.hinban = at; msg.push("品番 " + hin.length + "件"); pushMaster("hinban", DB.master.hinban);
+      var fu = readSheet(wb.getWorksheet("不良内容"), "不良内容");
+      if (fu) { DB.master.furyo = fu.map(function(o){ return {name: o["不良内容"], count: numOr(o["件数"], 0)}; }); DB.master.at.furyo = at; msg.push("不良内容 " + fu.length + "件"); pushMaster("furyo", DB.master.furyo); }
+      var bu = readSheet(wb.getWorksheet("部位"), "部位");
+      if (bu) { DB.master.bui = bu.map(function(o){ return {hinban: H(o["品番"]), bui: o["部位"], ka: numOr(o["加工面の件数"], 0), so: numOr(o["素材面の件数"], 0)}; }); DB.master.at.bui = at; msg.push("部位 " + bu.length + "件"); pushMaster("bui", DB.master.bui); }
+      var lo = readSheet(wb.getWorksheet("生産数"), "鋳造ロット");
+      if (lo) {
+        var n = 0;
+        lo.forEach(function(o){
+          var h = H(o["品番"]), lot = hank(o["鋳造ロット"]); if (!h || !lot) return;
+          var id = lotId(h, lot), s = numOr(o["生産数"], ""), p = numOr(o["過去不良数"], 0), old = DB.lots[id];
+          if (old && String(old.seisan) === String(s) && Number(old.past) === p && !old.deleted) return;
+          DB.lots[id] = {id: id, hinban: h, lot: lot, seisan: s, past: p, user: "マスター", updatedAt: at, deleted: false};
+          if (DB.lotOut.indexOf(id) < 0) DB.lotOut.push(id);
+          n++;
+        });
+        msg.push("生産数 " + lo.length + "ロット（変わったもの " + n + "）");
+      }
+      persist(); syncSoon(); render();
+      alert(msg.join("・") + " を読み込みました。" + (CFG.syncUrl ? "全端末に反映されます。" : ""));
+    }).catch(function(e){ alert("読み込めませんでした：" + e.message); });
+  });
+};
+
+$("btnTemplate").onclick = function(){
+  loadExcel().then(function(){
+    var wb = new ExcelJS.Workbook();
+    var a = wb.addWorksheet("品番");
+    a.addRow(["品番", "正式品番", "区分", "部位図", "最終確認日", "素材単価", "加工単価"]);
+    DB.master.hinban.forEach(function(m){ a.addRow([m.hinban, m.seiki, m.kubun, m.zu, m.last, m.sozai === "" ? null : m.sozai, m.kako === "" ? null : m.kako]); });
+    var b = wb.addWorksheet("不良内容"); b.addRow(["不良内容", "件数"]);
+    DB.master.furyo.forEach(function(f){ b.addRow([f.name, f.count]); });
+    var c = wb.addWorksheet("部位"); c.addRow(["品番", "部位", "加工面の件数", "素材面の件数"]);
+    DB.master.bui.forEach(function(x){ c.addRow([x.hinban, x.bui, x.ka, x.so]); });
+    var d = wb.addWorksheet("生産数"); d.addRow(["品番", "鋳造ロット", "生産数", "過去不良数"]);
+    Object.keys(DB.lots).sort().forEach(function(k){ var l = DB.lots[k]; if (!l.deleted) d.addRow([l.hinban, String(l.lot), l.seisan === "" ? null : l.seisan, l.past]); });
+    [a, b, c, d].forEach(function(ws){ ws.getRow(1).font = {bold: true}; ws.getRow(1).eachCell(function(x){ x.fill = {type: "pattern", pattern: "solid", fgColor: {argb: "FFD9D9D9"}}; }); ws.columns.forEach(function(col){ col.width = 14; }); ws.views = [{state: "frozen", ySplit: 1}]; });
+    d.getColumn(2).numFmt = "@";
+    return wb.xlsx.writeBuffer().then(function(buf){ download(buf, "加工畑マスター_" + today().replace(/\//g, "") + ".xlsx"); });
+  }).catch(function(e){ alert(e.message); });
+};
+
+function download(buf, name){
+  var blob = new Blob([buf], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+$("btnExcel").onclick = function(){
+  var from = parseDate($("x-from").value), to = parseDate($("x-to").value), label;
+  if ($("x-from").value.trim() || $("x-to").value.trim()) {
+    if (!from || !to) { toast("開始・終了の日付が読めません"); return; }
+    label = from.replace(/\//g, "") + "-" + to.replace(/\//g, "");
+  } else if ($("x-month").value === "all") { from = "2000/01/01"; to = "2099/12/31"; label = "全期間"; }
+  else { var r = monthRange($("x-month").value); from = r[0]; to = r[1]; label = $("x-month").value; }
+  var list = allRecs().filter(function(x){ return x.date >= from && x.date <= to; });
+  toast("Excelを作っています…", 4000);
+  loadExcel().then(function(){ return buildExcel(list, from, to, label); }).then(function(buf){
+    download(buf, "加工畑不良一覧表_" + label + ".xlsx"); toast("Excelを保存しました");
+  }).catch(function(e){ alert("Excel保存できませんでした：" + e.message); });
+};
+
+function buildExcel(list, from, to, label){
+  var wb = new ExcelJS.Workbook();
+  var thin = {style: "thin"}, dot = {style: "dotted"}, box = {top: thin, bottom: thin, left: thin, right: thin};
+  var GRAY = {type: "pattern", pattern: "solid", fgColor: {argb: "FFBFBFBF"}};
+  function safeName(s){ return String(s).replace(/[\\\/\?\*\[\]:]/g, "_").slice(0, 31); }
+
+  // 1) 品番ごとのシート（今のExcelと同じ並び）
+  var byH = {};
+  list.forEach(function(r){ (byH[r.hinban] = byH[r.hinban] || []).push(r); });
+  var order = hinbanList().map(function(m){ return m.hinban; }).filter(function(h){ return byH[h]; });
+  Object.keys(byH).forEach(function(h){ if (order.indexOf(h) < 0) order.push(h); });
+  var used = {};
+  order.forEach(function(h){
+    var nm = safeName(h); while (used[nm]) nm = nm.slice(0, 28) + "_" + Object.keys(used).length; used[nm] = 1;
+    var ws = wb.addWorksheet(nm);
+    var m = findHinban(h);
+    ws.getCell("A1").value = m ? m.seiki : h; ws.getCell("A1").font = {bold: true, size: 12};
+    var hr = ws.getRow(2);
+    ["確認日", "不良内容", "部位", "加工面", "素材面", "状態", "鋳造ロット", "数量", "作業者"].forEach(function(t, i){ var c = hr.getCell(i + 1); c.value = t; c.font = {bold: true}; c.fill = GRAY; c.border = box; c.alignment = {horizontal: "center"}; });
+    byH[h].forEach(function(r, i){
+      var row = ws.getRow(3 + i);
+      [xlDate(r.date), r.naiyo, r.bui, r.men === "加工面" ? "○" : null, r.men === "素材面" ? "○" : null, r.jotai, /^\d+$/.test(r.lot) ? Number(r.lot) : r.lot, Number(r.qty), r.user].forEach(function(v, j){ var c = row.getCell(j + 1); c.value = v; c.border = box; if (j >= 3 && j <= 5) c.alignment = {horizontal: "center"}; });
+      row.getCell(1).numFmt = "yyyy/m/d";
+    });
+    [11, 12, 16, 7, 7, 8, 11, 6, 9].forEach(function(w, i){ ws.getColumn(i + 1).width = w; });
+    ws.views = [{state: "frozen", ySplit: 2}];
+    ws.autoFilter = {from: "A2", to: "I2"};
+  });
+
+  // 2) 不良率（TVC向け／フコク向け／その他向け）：ロットの鋳造日で期間を絞る
+  var rows = lotRows();
+  KUBUN.forEach(function(kb){
+    var byL = {};
+    Object.keys(rows).forEach(function(k){
+      var r = rows[k]; if (kubunOf(r.hinban) !== kb || r.lot === "不明") return;
+      if (r.date ? (r.date < from || r.date > to) : label !== "全期間") return;
+      if (r.seisan == null && !r.furyo) return;
+      (byL[r.hinban] = byL[r.hinban] || []).push(r);
+    });
+    var hs = hinbanList().map(function(m){ return m.hinban; }).filter(function(h){ return byL[h]; });
+    Object.keys(byL).forEach(function(h){ if (hs.indexOf(h) < 0) hs.push(h); });
+    if (!hs.length) return;
+    var ws = wb.addWorksheet(kb + "不良率");
+    hs.forEach(function(h, bi){
+      var c0 = bi * 5 + 1, m = findHinban(h);
+      ws.mergeCells(1, c0, 1, c0 + 3);
+      var t = ws.getCell(1, c0); t.value = h + (m && m.seiki && m.seiki !== h ? "（" + m.seiki + "）" : ""); t.font = {bold: true}; t.alignment = {horizontal: "center"};
+      ["ロット", "生産数", "不良数", "不良率"].forEach(function(x, j){ var c = ws.getCell(2, c0 + j); c.value = x; c.font = {bold: true}; c.fill = GRAY; c.border = box; c.alignment = {horizontal: "center"}; });
+      var ls = byL[h].sort(function(a, b){ return a.lot < b.lot ? -1 : 1; });
+      var tS = 0, tF = 0;
+      ls.forEach(function(r, i){
+        var rr = 3 + i;
+        var L = ws.getCell(rr, c0), S = ws.getCell(rr, c0 + 1), Fu = ws.getCell(rr, c0 + 2), R = ws.getCell(rr, c0 + 3);
+        L.value = /^\d+$/.test(r.lot) ? Number(r.lot) : r.lot; S.value = r.seisan; Fu.value = r.furyo;
+        R.value = r.seisan ? {formula: Fu.address + "/" + S.address, result: r.furyo / r.seisan} : null; R.numFmt = "0.00%";
+        [L, S, Fu, R].forEach(function(c){ c.border = box; });
+        if (r.seisan) { tS += r.seisan; tF += r.furyo; }
+      });
+      var tr = 3 + ls.length, a1 = ws.getCell(3, c0 + 1).address, a2 = ws.getCell(tr - 1, c0 + 1).address, b1 = ws.getCell(3, c0 + 2).address, b2 = ws.getCell(tr - 1, c0 + 2).address;
+      var cT = ws.getCell(tr, c0), sS = ws.getCell(tr, c0 + 1), sF = ws.getCell(tr, c0 + 2), sR = ws.getCell(tr, c0 + 3);
+      cT.value = "合計"; cT.font = {bold: true};
+      sS.value = {formula: "SUM(" + a1 + ":" + a2 + ")", result: tS};
+      sF.value = {formula: "SUMIF(" + a1 + ":" + a2 + ',">0",' + b1 + ":" + b2 + ")", result: tF};
+      sR.value = tS ? {formula: sF.address + "/" + sS.address, result: tF / tS} : null; sR.numFmt = "0.00%";
+      [cT, sS, sF, sR].forEach(function(c){ c.border = box; c.fill = {type: "pattern", pattern: "solid", fgColor: {argb: "FFF2F2F2"}}; });
+      [9, 8, 7, 8, 2].forEach(function(w, j){ ws.getColumn(c0 + j).width = w; });
+    });
+    ws.views = [{state: "frozen", ySplit: 2}];
+  });
+
+  // 3) 紙と同じ見た目（加工畑不良一覧表・1ページ41行）
+  var ws = wb.addWorksheet("原紙", {pageSetup: {paperSize: 9, orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: {left: .4, right: .4, top: .5, bottom: .5, header: .3, footer: .3}}});
+  [8.5, 13.5, 11.6, 16.6, 3.9, 3.9, 3.9, 3.9, 3.9, 12.6, 6.6].forEach(function(w, i){ ws.getColumn(i + 1).width = w; });
+  var head = ["記入日", "品番", "不良内容", "部位", "加", "素", "未", "半", "完", "鋳造ロット", "数量"];
+  var PER = 41, pages = Math.max(1, Math.ceil(list.length / PER)), row = 1;
+  for (var p = 0; p < pages; p++) {
+    ws.mergeCells(row, 1, row, 11);
+    var t = ws.getCell(row, 1); t.value = "加工畑不良一覧表"; t.font = {name: "メイリオ", size: 14}; t.alignment = {horizontal: "center", vertical: "middle"};
+    ws.getRow(row).height = 21; row++;
+    var hr2 = ws.getRow(row); hr2.height = 19;
+    head.forEach(function(h, i){ var c = hr2.getCell(i + 1); c.value = h; c.font = {name: "メイリオ", size: 11}; c.alignment = {horizontal: "center", vertical: "middle"}; c.fill = GRAY; c.border = {top: thin, bottom: thin, left: i === 0 ? thin : dot, right: i === 10 ? thin : dot}; });
+    row++;
+    for (var k = 0; k < PER; k++) {
+      var r = list[p * PER + k], rr2 = ws.getRow(row); rr2.height = 19;
+      var vals = r ? [r.date.slice(5), r.hinban, r.naiyo, r.bui, r.men === "加工面" ? "○" : "", r.men === "素材面" ? "○" : "", r.jotai === "未加工" ? "○" : "", r.jotai === "半ペタ" ? "○" : "", r.jotai === "完成" ? "○" : "", r.lot, Number(r.qty)] : ["", "", "", "", "", "", "", "", "", "", ""];
+      vals.forEach(function(v, i){ var c = rr2.getCell(i + 1); c.value = v; c.font = {name: "游ゴシック", size: 11}; c.alignment = {horizontal: (i === 0 || i === 3) ? "left" : "center", vertical: "middle", shrinkToFit: true}; c.border = {top: thin, bottom: thin, left: i === 0 ? thin : dot, right: i === 10 ? thin : dot}; if (i === 1 || i === 9) c.numFmt = "@"; });
+      row++;
+    }
+    if (p < pages - 1) ws.getRow(row - 1).addPageBreak();
+  }
+  ws.headerFooter.oddFooter = "&L" + from + "〜" + to + "&R&P / &N";
+
+  // 4) 一覧
+  var w2 = wb.addWorksheet("一覧");
+  var h2 = ["確認日", "月度", "品番", "正式品番", "区分", "不良内容", "部位", "加工面", "素材面", "状態", "鋳造ロット", "数量", "単価", "金額", "作業者", "備考", "確認者"];
+  w2.addRow(h2);
+  list.forEach(function(r){ w2.addRow([xlDate(r.date), r.month, r.hinban, r.seiki || "", kubunOf(r.hinban), r.naiyo, r.bui, r.men === "加工面" ? "○" : "", r.men === "素材面" ? "○" : "", r.jotai, r.lot, Number(r.qty), r.tanka === "" ? null : r.tanka, r.kingaku === "" ? null : r.kingaku, r.user, r.biko, (DB.confs[r.date] || {}).by || ""]); });
+  [11, 11, 13, 16, 10, 11, 14, 7, 7, 7, 10, 6, 8, 10, 9, 22, 9].forEach(function(w, i){ w2.getColumn(i + 1).width = w; });
+  w2.getColumn(1).numFmt = "yyyy/m/d"; w2.getColumn(13).numFmt = "#,##0"; w2.getColumn(14).numFmt = "#,##0";
+  w2.getRow(1).eachCell(function(c){ c.font = {bold: true}; c.fill = GRAY; });
+  w2.views = [{state: "frozen", ySplit: 1}];
+  w2.autoFilter = {from: "A1", to: {row: 1, column: h2.length}};
+  return wb.xlsx.writeBuffer();
+}
+
+// ---------------------------------------------------------------- 同期
+var syncing = false, lastErr = "", syncT = null;
+function badge(cls, text){ var b = $("badge"); b.className = "badge " + cls; b.textContent = text; }
+function pending(){ return DB.out.length + DB.lotOut.length + DB.confOut.length; }
+function renderBadge(){
+  if (!CFG.syncUrl) { badge("local", "端末内のみ（同期未設定）"); return; }
+  var n = pending();
+  if (lastErr) badge("err", (navigator.onLine ? "送信エラー" : "オフライン") + (n ? "（未送信 " + n + "件）" : ""));
+  else badge(n ? "wait" : "ok", n ? "未送信 " + n + "件" : "同期済み ✓");
+}
+function renderSyncInfo(){
+  $("sy-info").textContent = !CFG.syncUrl ? "config.js の syncUrl が空です（この端末の中だけに保存しています）" :
+    (lastErr ? "エラー：" + lastErr + "　" : "") + "未送信 " + pending() + "件　最後の同期：" + (DB.lastSync ? new Date(DB.lastSync).toLocaleString("ja-JP") : "まだ");
+}
+function syncSoon(){ renderBadge(); clearTimeout(syncT); syncT = setTimeout(syncNow, 400); }
+function post(body){
+  body.token = CFG.token;
+  return fetch(CFG.syncUrl, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(body), redirect: "follow"})
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if (!j.ok) throw new Error(j.error || "送信エラー"); return j; });
+}
+function pushMaster(kind, data){
+  if (!CFG.syncUrl) return;
+  post({action: "master", kind: kind, data: data}).then(function(j){ DB.master.at[kind] = j.updatedAt; persist(); }).catch(function(e){ toast("マスターを送れませんでした：" + e.message, 3500); });
+}
+function syncNow(manual, full){
+  if (!CFG.syncUrl || syncing) { renderBadge(); return Promise.resolve(); }
+  syncing = true;
+  function sendRecs(){ // 50件ずつ
+    var ids = DB.out.slice(0, 50); if (!ids.length) return Promise.resolve();
+    return post({action: "save", records: ids.map(function(id){ return DB.recs[id]; }).filter(Boolean)}).then(function(j){
+      DB.out = DB.out.filter(function(id){ return j.saved.indexOf(id) < 0 && DB.recs[id]; }); persist();
+      if (DB.out.length && j.saved.length) return sendRecs();
+    });
+  }
+  function sendLots(){ // 1500件ずつ
+    var ids = DB.lotOut.slice(0, 1500); if (!ids.length) return Promise.resolve();
+    return post({action: "lots", lots: ids.map(function(id){ return DB.lots[id]; }).filter(Boolean)}).then(function(j){
+      DB.lotOut = DB.lotOut.filter(function(id){ return j.saved.indexOf(id) < 0 && DB.lots[id]; }); persist();
+      if (DB.lotOut.length && j.saved.length) return sendLots();
+    });
+  }
+  var p = Promise.resolve().then(sendRecs).then(sendLots);
+  DB.confOut.slice().forEach(function(d){ p = p.then(function(){ return post({action: "confirm", confirm: DB.confs[d]}).then(function(){ DB.confOut = DB.confOut.filter(function(x){ return x !== d; }); persist(); }); }); });
+  p = p.then(function(){
+    var since = full ? "" : (DB.since || "");
+    return fetch(CFG.syncUrl + "?action=list&token=" + encodeURIComponent(CFG.token) + "&since=" + encodeURIComponent(since)).then(function(r){ return r.json(); });
+  }).then(function(j){
+    if (!j.ok) throw new Error(j.error || "受信エラー");
+    var pr = {}; DB.out.forEach(function(id){ pr[id] = 1; });
+    var pl = {}; DB.lotOut.forEach(function(id){ pl[id] = 1; });
+    if (j.full) { // 全部読み直し：サーバーにない記録（未送信のもの以外）は消す
+      var seen = {}; (j.records || []).forEach(function(r){ seen[r.id] = 1; });
+      Object.keys(DB.recs).forEach(function(id){ if (!seen[id] && !pr[id]) delete DB.recs[id]; });
+      var seenL = {}; (j.lots || []).forEach(function(l){ seenL[l.id] = 1; });
+      Object.keys(DB.lots).forEach(function(id){ if (!seenL[id] && !pl[id]) delete DB.lots[id]; });
+    }
+    (j.records || []).forEach(function(r){ if (pr[r.id]) return; var c = DB.recs[r.id]; if (!c || (r.updatedAt || "") >= (c.updatedAt || "")) DB.recs[r.id] = r; });
+    (j.lots || []).forEach(function(l){ if (pl[l.id]) return; var c = DB.lots[l.id]; if (!c || (l.updatedAt || "") >= (c.updatedAt || "")) DB.lots[l.id] = l; });
+    var m = j.master || {};
+    ["hinban", "furyo", "bui"].forEach(function(k){ if (m[k] && m[k].updatedAt !== DB.master.at[k]) { DB.master[k] = m[k].data || []; DB.master.at[k] = m[k].updatedAt; } });
+    var pc = {}; DB.confOut.forEach(function(d){ pc[d] = 1; });
+    (j.confirms || []).forEach(function(c){ if (!pc[c.date]) DB.confs[c.date] = c; });
+    // 次はサーバーの時計でこの時刻より後に受け取ったものだけ（少し戻して取りこぼしを防ぐ）
+    DB.since = new Date(new Date(j.serverTime).getTime() - 20000).toISOString();
+    DB.lastSync = nowIso();
+    persist();
+    lastErr = "";
+    if (manual) toast(full ? "全部読み直しました" : "同期しました");
+  }).catch(function(e){
+    lastErr = navigator.onLine ? (e.message || "接続エラー") : "オフライン";
+    if (manual) toast("同期できませんでした：" + lastErr, 3500);
+  }).then(function(){
+    syncing = false; renderBadge();
+    if (curTab !== "input") render(); else if (!editId) renderDay();
+  });
+  return p;
+}
+$("btnSync").onclick = function(){ syncNow(true); };
+$("btnFull").onclick = function(){ syncNow(true, true); };
+window.addEventListener("online", function(){ syncNow(); });
+window.addEventListener("offline", function(){ lastErr = "オフライン"; renderBadge(); });
+setInterval(function(){ if (document.visibilityState === "visible") syncNow(); }, 60000);
+document.addEventListener("visibilitychange", function(){ if (document.visibilityState === "visible") syncNow(); });
+
+// ---------------------------------------------------------------- はじめに
+window.__kb = {monthOf: monthOf, parseDate: parseDate, lotRows: lotRows};
+idbOpen().then(function(){ return idbGet("db"); }).then(function(saved){
+  if (saved) { var e = EMPTY(); Object.keys(e).forEach(function(k){ if (saved[k] !== undefined) e[k] = saved[k]; }); e.master = Object.assign(EMPTY().master, saved.master || {}); DB = e; }
+  window.__kb.DB = function(){ return DB; };
+  var us = CFG.users || [];
+  $("user").innerHTML = '<option value="">選ぶ</option>' + us.map(function(u){ return "<option>" + esc(u) + "</option>"; }).join("");
+  $("user").value = pget(PREF.user, "");
+  $("user").onchange = function(){ pset(PREF.user, this.value); };
+  if (VIEW) {
+    document.querySelectorAll(".noview").forEach(function(el){ el.classList.add("hidden"); });
+    $("viewbanner").classList.remove("hidden");
+    $("viewLink").classList.add("hidden");
+  }
+  $("loading").classList.add("hidden"); $("main").classList.remove("hidden");
+  applyKeyboardMode();
+  setDate(today());
+  onHinban(true);
+  showTab(curTab);
+  renderBadge();
+  syncNow(false, !DB.since);
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function(){});
+});
+})();
+</script>
+</body>
+</html>
