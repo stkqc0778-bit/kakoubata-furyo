@@ -316,23 +316,40 @@ tr.sel td{background:#fff7e0}
 <!-- ============================ 集計 ============================ -->
 <section id="tab-sum" class="hidden">
   <div class="card">
-    <div class="filters">
-      <select id="s-month"></select>
-      <select id="s-kubun"></select>
+    <h2>品番別の集計</h2>
+    <div class="chips hin" id="c-shinban"></div>
+    <div class="filters" style="margin-top:10px">
+      <select id="s-period">
+        <option value="all">全期間</option>
+        <option value="12">直近12か月度</option>
+        <option value="6">直近6か月度</option>
+        <option value="3">直近3か月度</option>
+        <option value="1">今月度</option>
+        <option value="range">期間を指定</option>
+      </select>
+      <span id="s-rangebox" class="hidden"><input type="text" id="s-from" placeholder="開始 2026/04/21" style="width:140px">〜<input type="text" id="s-to" placeholder="終了 2026/10/20" style="width:140px"></span>
       <span class="muted" id="s-range"></span>
     </div>
     <div class="kpis" id="kpis"></div>
-    <div class="grid2">
-      <div><h3>品番別</h3><div class="tblwrap"><table id="t-hinban"></table></div></div>
-      <div><h3>不良内容別</h3><div class="tblwrap"><table id="t-naiyo"></table></div></div>
+    <div id="s-all">
+      <h3>品番ごと（押すとその品番の集計）</h3>
+      <div class="filters"><select id="s-kubun"></select></div>
+      <div class="tblwrap"><table id="t-hinban"></table></div>
     </div>
-    <h3>品番 × 不良内容</h3>
-    <div class="tblwrap"><table id="t-cross"></table></div>
-    <h3>部位（多い順）</h3>
-    <div class="filters"><input type="text" id="s-hinban" placeholder="品番で絞る（空欄はすべて）"></div>
-    <div class="tblwrap"><table id="t-bui"></table></div>
-    <h3>月度ごとの推移（確認日で集計・直近6か月度）</h3>
-    <div class="tblwrap"><table id="t-trend"></table></div>
+    <div id="s-one" class="hidden">
+      <div class="grid2">
+        <div><h3>不良内容別</h3><div class="tblwrap"><table id="t-naiyo"></table></div></div>
+        <div><h3>部位別</h3><div class="tblwrap"><table id="t-bui"></table></div></div>
+      </div>
+      <h3>部位 × 不良内容</h3>
+      <div class="tblwrap"><table id="t-cross"></table></div>
+      <div class="grid2">
+        <div><h3>状態別</h3><div class="tblwrap"><table id="t-jotai"></table></div></div>
+        <div><h3>鋳造ロット（不良の多い順）</h3><div class="tblwrap"><table id="t-lot"></table></div></div>
+      </div>
+      <h3>月度ごとの推移</h3>
+      <div class="tblwrap"><table id="t-trend"></table></div>
+    </div>
   </div>
 </section>
 
@@ -380,7 +397,7 @@ tr.sel td{background:#fff7e0}
 <script>
 (function(){
 "use strict";
-var APP_VER = "kakoubata-v5";
+var APP_VER = "kakoubata-v6";
 var CFG = window.APP_CONFIG || {};
 var PHOTOS = window.BUI_PHOTOS || {};
 var VIEW = /[?&]view\b/.test(location.search);
@@ -1133,51 +1150,99 @@ function aggregate(list){
   });
   return A;
 }
-function renderSum(){
-  fillMonthSelect($("s-month"), 72);
-  fillKubun($("s-kubun"));
-  var mon = $("s-month").value, kb = $("s-kubun").value, rg = monthRange(mon);
-  $("s-range").textContent = "確認日 " + rg[0] + "〜" + rg[1];
-  var list = allRecs().filter(function(r){ return r.month === mon && (!kb || kubunOf(r.hinban) === kb); });
-  var A = aggregate(list);
-  $("kpis").innerHTML =
-    '<div class="kpi"><div class="l">不良数</div><div class="v">' + num(A.qty) + "<small> 個</small></div></div>" +
-    '<div class="kpi"><div class="l">加工面で見つかった</div><div class="v" style="color:var(--ka)">' + num(A.ka) + "<small> 個</small></div></div>" +
-    '<div class="kpi"><div class="l">素材面で見つかった</div><div class="v" style="color:var(--so)">' + num(A.so) + "<small> 個</small></div></div>" +
-    '<div class="kpi"><div class="l">品番の数</div><div class="v">' + Object.keys(A.hin).length + "</div></div>" +
-    (A.hasKin ? '<div class="kpi"><div class="l">金額</div><div class="v">' + yen(A.kin) + "</div></div>" : "");
-  function table(obj, label){
-    var keys = Object.keys(obj).sort(function(a, b){ return (obj[b].so + obj[b].ka) - (obj[a].so + obj[a].ka); });
-    var mx = Math.max.apply(null, keys.map(function(k){ return obj[k].so + obj[k].ka; }).concat([1]));
-    return "<tr><th>" + label + '</th><th class="r">加工面</th><th class="r">素材面</th><th class="r">計</th>' + (A.hasKin ? '<th class="r">金額</th>' : "") + '<th style="min-width:120px"></th></tr>' +
-      (keys.length ? keys.map(function(k){ var o = obj[k];
-        return "<tr><td>" + esc(k) + '</td><td class="r">' + o.ka + '</td><td class="r">' + o.so + '</td><td class="r"><b>' + (o.ka + o.so) + "</b></td>" + (A.hasKin ? '<td class="r">' + yen(o.kin) + "</td>" : "") + "<td>" +
-          '<span class="bar ka" style="width:' + (o.ka / mx * 120) + 'px"></span><span class="bar so" style="width:' + (o.so / mx * 120) + 'px"></span></td></tr>'; }).join("") : '<tr><td colspan="6" class="muted">記録なし</td></tr>');
-  }
-  $("t-hinban").innerHTML = table(A.hin, "品番");
-  $("t-naiyo").innerHTML = table(A.nai, "不良内容");
-  var nt = {};
-  Object.keys(A.cross).forEach(function(h){ Object.keys(A.cross[h]).forEach(function(n){ nt[n] = (nt[n] || 0) + A.cross[h][n]; }); });
-  var nk = Object.keys(nt).sort(function(a, b){ return nt[b] - nt[a]; }).slice(0, 12);
-  var hk = Object.keys(A.cross).sort(function(a, b){ return (A.hin[b].ka + A.hin[b].so) - (A.hin[a].ka + A.hin[a].so); });
-  $("t-cross").innerHTML = hk.length ? "<tr><th>品番</th>" + nk.map(function(n){ return '<th class="r">' + esc(n) + "</th>"; }).join("") + '<th class="r">計</th></tr>' +
-    hk.map(function(h){ var tot = A.hin[h].ka + A.hin[h].so; return "<tr><td>" + esc(h) + "</td>" + nk.map(function(n){ var v = A.cross[h][n] || 0; return '<td class="r"' + (v ? ' style="background:rgba(179,84,30,' + Math.min(.5, .06 + v / Math.max(1, tot) * .6).toFixed(2) + ')"' : "") + ">" + (v || "") + "</td>"; }).join("") + '<td class="r"><b>' + tot + "</b></td></tr>"; }).join("")
-    : '<tr><td class="muted">記録なし</td></tr>';
-  var hf = H($("s-hinban").value);
-  var bk = Object.keys(A.bui).filter(function(k){ return !hf || H(k.split("\t")[0]).indexOf(hf) >= 0; }).sort(function(a, b){ return (A.bui[b].ka + A.bui[b].so) - (A.bui[a].ka + A.bui[a].so); }).slice(0, 25);
-  $("t-bui").innerHTML = bk.length ? '<tr><th>品番</th><th>部位</th><th class="r">加工面</th><th class="r">素材面</th><th class="r">計</th><th>主な不良内容</th></tr>' +
-    bk.map(function(k){ var b = A.bui[k], p = k.split("\t"); var top = Object.keys(b.nai).sort(function(x, y){ return b.nai[y] - b.nai[x]; }).slice(0, 3).map(function(n){ return n + " " + b.nai[n]; }).join("、");
-      return "<tr><td>" + esc(p[0]) + "</td><td>" + esc(p[1]) + '</td><td class="r">' + b.ka + '</td><td class="r">' + b.so + '</td><td class="r"><b>' + (b.ka + b.so) + "</b></td><td>" + esc(top) + "</td></tr>"; }).join("")
-    : '<tr><td class="muted">記録なし</td></tr>';
-  var ms = monthsBack(6).reverse();
-  var tr = ms.map(function(m){ return {m: m, A: aggregate(allRecs().filter(function(r){ return r.month === m && (!kb || kubunOf(r.hinban) === kb); }))}; });
-  var mx = Math.max.apply(null, tr.map(function(t){ return t.A.qty; }).concat([1]));
-  $("t-trend").innerHTML = '<tr><th>月度</th><th class="r">加工面</th><th class="r">素材面</th><th class="r">計</th><th style="min-width:160px"></th></tr>' +
-    tr.map(function(t){ return "<tr><td>" + t.m + '</td><td class="r">' + t.A.ka + '</td><td class="r">' + t.A.so + '</td><td class="r"><b>' + t.A.qty + "</b></td><td>" +
-      '<span class="bar ka" style="width:' + (t.A.ka / mx * 160) + 'px"></span><span class="bar so" style="width:' + (t.A.so / mx * 160) + 'px"></span></td></tr>'; }).join("");
+var sumHin = "", sumMore = {};
+function sumPeriod(){ // 集計の期間 [開始, 終了, 表示]
+  var v = $("s-period").value;
+  $("s-rangebox").classList.toggle("hidden", v !== "range");
+  if (v === "all") return ["2000/01/01", "2099/12/31", "全期間"];
+  if (v === "range") { var f = parseDate($("s-from").value), t = parseDate($("s-to").value); if (f && t) return [f, t, f + "〜" + t]; return ["2000/01/01", "2099/12/31", "期間を入れてください（今は全期間）"]; }
+  var ms = monthsBack(Number(v)), r1 = monthRange(ms[ms.length - 1]), r2 = monthRange(ms[0]);
+  return [r1[0], r2[1], r1[0] + "〜" + r2[1]];
 }
-["s-month","s-kubun"].forEach(function(id){ $(id).onchange = renderSum; });
-$("s-hinban").oninput = renderSum;
+function renderSumHinbanChips(){
+  var a = activeHinban();
+  var list = [{v: "すべて", sub: "品番ごとに比べる"}].concat(a.list);
+  chipBtns($("c-shinban"), list, "", function(v){ sumHin = v === "すべて" ? "" : v; renderSum(); }, sumHin || "すべて", a.active + 1, "shinban");
+}
+function bars(ka, so, mx, w){ return '<span class="bar ka" style="width:' + (ka / mx * w) + 'px"></span><span class="bar so" style="width:' + (so / mx * w) + 'px"></span>'; }
+function renderSum(){
+  renderSumHinbanChips();
+  fillKubun($("s-kubun"));
+  var P = sumPeriod(), from = P[0], to = P[1];
+  $("s-range").textContent = "確認日 " + P[2];
+  var kb = $("s-kubun").value;
+  var list = allRecs().filter(function(r){ return r.date >= from && r.date <= to && (sumHin ? r.hinban === sumHin : (!kb || kubunOf(r.hinban) === kb)); });
+  var A = aggregate(list);
+  // ロットの不良率（鋳造日が期間内で生産数があるロット）
+  var lr = lotRows(), lS = 0, lF = 0, lots = [];
+  Object.keys(lr).forEach(function(k){ var r = lr[k]; if (!r.date || r.date < from || r.date > to) return; if (sumHin ? r.hinban !== sumHin : (kb && kubunOf(r.hinban) !== kb)) return; lots.push(r); if (r.seisan) { lS += r.seisan; lF += r.furyo; } });
+  $("kpis").innerHTML =
+    '<div class="kpi"><div class="l">' + (sumHin ? esc(sumHin) + " の不良数" : "不良数") + '</div><div class="v">' + num(A.qty) + "<small> 個</small></div></div>" +
+    '<div class="kpi"><div class="l">加工面で見つかった</div><div class="v" style="color:var(--ka)">' + num(A.ka) + "<small> 個（" + (A.qty ? Math.round(A.ka / A.qty * 100) : 0) + "%）</small></div></div>" +
+    '<div class="kpi"><div class="l">素材面で見つかった</div><div class="v" style="color:var(--so)">' + num(A.so) + "<small> 個（" + (A.qty ? Math.round(A.so / A.qty * 100) : 0) + "%）</small></div></div>" +
+    '<div class="kpi"><div class="l">素材不良率（鋳造日が期間内のロット）</div><div class="v">' + pct(lF, lS) + "<small> " + num(lF) + "／" + num(lS) + "</small></div></div>" +
+    (A.hasKin ? '<div class="kpi"><div class="l">金額</div><div class="v">' + yen(A.kin) + "</div></div>" : "");
+  $("s-all").classList.toggle("hidden", !!sumHin);
+  $("s-one").classList.toggle("hidden", !sumHin);
+  if (!sumHin) {
+    var rate = {};
+    lots.forEach(function(r){ var x = rate[r.hinban] = rate[r.hinban] || {s: 0, f: 0}; if (r.seisan) { x.s += r.seisan; x.f += r.furyo; } });
+    var keys = Object.keys(A.hin).sort(function(a, b){ return (A.hin[b].ka + A.hin[b].so) - (A.hin[a].ka + A.hin[a].so); });
+    var mx = Math.max.apply(null, keys.map(function(k){ return A.hin[k].ka + A.hin[k].so; }).concat([1]));
+    $("t-hinban").innerHTML = '<tr><th>品番</th><th>区分</th><th class="r">加工面</th><th class="r">素材面</th><th class="r">計</th><th class="r">素材不良率</th><th>多い不良内容</th><th style="min-width:120px"></th></tr>' +
+      (keys.length ? keys.map(function(h){ var o = A.hin[h], x = rate[h], c = A.cross[h], top = Object.keys(c).sort(function(a, b){ return c[b] - c[a]; }).slice(0, 3).map(function(n){ return n + " " + c[n]; }).join("、");
+        return '<tr class="click" data-h="' + esc(h) + '"><td><b>' + esc(h) + "</b></td><td>" + esc(kubunOf(h)) + '</td><td class="r">' + num(o.ka) + '</td><td class="r">' + num(o.so) + '</td><td class="r"><b>' + num(o.ka + o.so) + '</b></td><td class="r">' + (x && x.s ? pct(x.f, x.s) : "―") + "</td><td>" + esc(top) + "</td><td>" + bars(o.ka, o.so, mx, 120) + "</td></tr>"; }).join("")
+      : '<tr><td class="muted">記録なし</td></tr>');
+    $("t-hinban").querySelectorAll("tr.click").forEach(function(tr){ tr.onclick = function(){ sumHin = tr.dataset.h; renderSum(); window.scrollTo({top: 0, behavior: "smooth"}); }; });
+    return;
+  }
+  // ---- 1つの品番
+  function table(obj, label, extra, key){
+    var keys = Object.keys(obj).sort(function(a, b){ return (obj[b].so + obj[b].ka) - (obj[a].so + obj[a].ka); });
+    var allN = keys.length, LIM = 15;
+    if (key && !sumMore[key] && allN > LIM) keys = keys.slice(0, LIM);
+    var mx = Math.max.apply(null, keys.map(function(k){ return obj[k].so + obj[k].ka; }).concat([1]));
+    return "<tr><th>" + label + '</th><th class="r">加工面</th><th class="r">素材面</th><th class="r">計</th><th class="r">割合</th>' + (extra ? "<th>" + extra.head + "</th>" : "") + '<th style="min-width:110px"></th></tr>' +
+      (keys.length ? keys.map(function(k){ var o = obj[k], t = o.ka + o.so;
+        return "<tr><td>" + esc(k) + '</td><td class="r">' + num(o.ka) + '</td><td class="r">' + num(o.so) + '</td><td class="r"><b>' + num(t) + '</b></td><td class="r">' + (A.qty ? (t / A.qty * 100).toFixed(1) + "%" : "") + "</td>" + (extra ? "<td>" + esc(extra.cell(k)) + "</td>" : "") + "<td>" + bars(o.ka, o.so, mx, 110) + "</td></tr>"; }).join("")
+        : '<tr><td colspan="7" class="muted">記録なし</td></tr>') +
+      (key && allN > LIM ? '<tr><td colspan="7"><button class="sbtn" data-more="' + key + '">' + (sumMore[key] ? "上位" + LIM + "件だけ表示" : "すべて表示（" + allN + "件）") + "</button></td></tr>" : "");
+  }
+  $("t-naiyo").innerHTML = table(A.nai, "不良内容", null, "naiyo");
+  var B = {}, BN = {};
+  Object.keys(A.bui).forEach(function(k){ var p = k.split("\t")[1], b = A.bui[k]; B[p] = {ka: b.ka, so: b.so}; BN[p] = b.nai; });
+  $("t-bui").innerHTML = table(B, "部位", {head: "主な不良内容", cell: function(k){ var n = BN[k]; return Object.keys(n).sort(function(a, b){ return n[b] - n[a]; }).slice(0, 2).map(function(x){ return x + " " + n[x]; }).join("、"); }}, "bui");
+  ["t-naiyo", "t-bui"].forEach(function(id){ $(id).querySelectorAll("[data-more]").forEach(function(b){ b.onclick = function(){ sumMore[b.dataset.more] = !sumMore[b.dataset.more]; renderSum(); }; }); });
+  // 部位 × 不良内容
+  var nk = Object.keys(A.nai).sort(function(a, b){ return (A.nai[b].ka + A.nai[b].so) - (A.nai[a].ka + A.nai[a].so); }).slice(0, 10);
+  var bk = Object.keys(B).sort(function(a, b){ return (B[b].ka + B[b].so) - (B[a].ka + B[a].so); }).slice(0, 20);
+  $("t-cross").innerHTML = bk.length ? "<tr><th>部位</th>" + nk.map(function(n){ return '<th class="r">' + esc(n) + "</th>"; }).join("") + '<th class="r">計</th></tr>' +
+    bk.map(function(b){ var tot = B[b].ka + B[b].so; return "<tr><td>" + esc(b) + "</td>" + nk.map(function(n){ var v = BN[b][n] || 0; return '<td class="r"' + (v ? ' style="background:rgba(179,84,30,' + Math.min(.55, .06 + v / Math.max(1, A.qty) * 4).toFixed(2) + ')"' : "") + ">" + (v || "") + "</td>"; }).join("") + '<td class="r"><b>' + tot + "</b></td></tr>"; }).join("")
+    : '<tr><td class="muted">記録なし</td></tr>';
+  // 状態別
+  var J = {};
+  list.forEach(function(r){ var k = r.jotai || "（空欄）", x = J[k] = J[k] || {ka: 0, so: 0}; x[r.men === "加工面" ? "ka" : "so"] += Number(r.qty || 0); });
+  $("t-jotai").innerHTML = table(J, "状態");
+  // ロット（期間内の記録で不良の多い順）
+  var L = {};
+  list.forEach(function(r){ if (!r.lot) return; L[r.lot] = (L[r.lot] || 0) + Number(r.qty || 0); });
+  var lk = Object.keys(L).sort(function(a, b){ return L[b] - L[a]; }).slice(0, 15);
+  $("t-lot").innerHTML = '<tr><th>鋳造ロット</th><th class="r">不良（期間内の記録）</th><th class="r">生産数</th><th class="r">不良率（ロット全体）</th></tr>' +
+    (lk.length ? lk.map(function(l){ var r = lr[lotId(sumHin, l)]; return "<tr><td>" + esc(l) + '</td><td class="r">' + L[l] + '</td><td class="r">' + (r && r.seisan ? num(r.seisan) : "―") + '</td><td class="r">' + (r && r.seisan ? pct(r.furyo, r.seisan) : "―") + "</td></tr>"; }).join("") : '<tr><td colspan="4" class="muted">記録なし</td></tr>');
+  // 月度ごとの推移（確認日で集計）＋素材不良率（ロットの鋳造日で集計）
+  var MO = {};
+  list.forEach(function(r){ var x = MO[r.month] = MO[r.month] || {ka: 0, so: 0, s: 0, f: 0}; x[r.men === "加工面" ? "ka" : "so"] += Number(r.qty || 0); });
+  lots.forEach(function(r){ if (!r.seisan) return; var x = MO[r.month] = MO[r.month] || {ka: 0, so: 0, s: 0, f: 0}; x.s += r.seisan; x.f += r.furyo; });
+  var mk = Object.keys(MO).sort().reverse().slice(0, 36);
+  var mx2 = Math.max.apply(null, mk.map(function(k){ return MO[k].ka + MO[k].so; }).concat([1]));
+  $("t-trend").innerHTML = '<tr><th>月度</th><th class="r">加工面</th><th class="r">素材面</th><th class="r">不良数</th><th class="r">生産数</th><th class="r">素材不良率</th><th style="min-width:140px"></th></tr>' +
+    (mk.length ? mk.map(function(m){ var x = MO[m]; return "<tr><td>" + m + '</td><td class="r">' + num(x.ka) + '</td><td class="r">' + num(x.so) + '</td><td class="r"><b>' + num(x.ka + x.so) + '</b></td><td class="r">' + (x.s ? num(x.s) : "") + '</td><td class="r">' + (x.s ? pct(x.f, x.s) : "") + "</td><td>" + bars(x.ka, x.so, mx2, 140) + "</td></tr>"; }).join("") +
+      '<tr><td colspan="7" class="muted">不良数は確認日の月度、生産数・素材不良率はロットの鋳造日の月度で数えています（直近36か月度まで表示）</td></tr>'
+      : '<tr><td class="muted">記録なし</td></tr>');
+}
+$("s-period").onchange = renderSum;
+$("s-kubun").onchange = renderSum;
+["s-from", "s-to"].forEach(function(id){ $(id).addEventListener("change", renderSum); });
 
 // ---------------------------------------------------------------- 設定
 function renderSet(){
