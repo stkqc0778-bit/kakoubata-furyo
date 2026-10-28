@@ -81,6 +81,8 @@ input[readonly]{background:#fafbfc;cursor:pointer}
 .seg[data-f=men] button[data-v="加工面"].on{background:var(--ka);border-color:var(--ka)}
 .seg[data-f=men] button[data-v="素材面"].on{background:var(--so);border-color:var(--so)}
 .seg[data-f=jotai] button.on{background:#4a5868;border-color:#4a5868}
+.seg[data-f=kkubun] button.on,.seg[data-f=kkyoiku] button.on{background:var(--pri);border-color:var(--pri)}
+.seg[data-f=kkyoiku] button[data-v="まだ"].on{background:var(--warn);border-color:var(--warn)}
 .seg button.on .k{color:#fffc}
 .row{display:flex;gap:8px;align-items:center}
 .row input{flex:1;min-width:0}
@@ -162,6 +164,7 @@ tr.sel td{background:#fff7e0}
   <nav id="tabs">
     <button data-tab="input" class="noview">入力</button>
     <button data-tab="rate">生産数・不良率</button>
+    <button data-tab="chk" class="noview2">見逃し・過剰検査</button>
     <button data-tab="list">一覧・確認</button>
     <button data-tab="sum">集計</button>
     <button data-tab="set">設定</button>
@@ -224,6 +227,13 @@ tr.sel td{background:#fff7e0}
           <button type="button" data-v="半ペタ" tabindex="-1">半ペタ<span class="k">キー 2</span></button>
           <button type="button" data-v="完成" tabindex="-1">完成<span class="k">キー 3</span></button>
         </div>
+      </div>
+
+      <label for="f-kata" class="kata-row hidden">型番<span class="req">必須</span></label>
+      <div class="fld kata-row hidden">
+        <input type="text" id="f-kata" data-kb data-num data-pad autocomplete="off" placeholder="未加工のときは型番を選ぶ（分からないときは「不明」）">
+        <div class="chips" id="c-kata"></div>
+        <div class="info" id="i-kata"></div>
       </div>
 
       <label for="f-lot">鋳造ロット<span class="req">必須</span></label>
@@ -296,6 +306,79 @@ tr.sel td{background:#fff7e0}
     </div>
     <div class="muted" id="r-info"></div>
     <div class="tblwrap"><table id="r-lots"></table></div>
+  </div>
+</section>
+
+<!-- ============================ 見逃し・過剰検査（加工畑不良確認） ============================ -->
+<section id="tab-chk" class="hidden">
+  <div class="card noview">
+    <div id="k-editbar" class="editbar hidden">記録を修正しています　<button class="sbtn" id="k-cancel">修正をやめる</button></div>
+    <h2>加工畑不良確認の入力</h2>
+    <div class="form">
+      <label>区分<span class="req">必須</span></label>
+      <div class="fld">
+        <div class="seg" id="g-kkubun" data-f="kkubun" tabindex="0">
+          <button type="button" data-v="鋳造課：見逃し品" tabindex="-1">鋳造課：見逃し品<span class="k">キー 1</span></button>
+          <button type="button" data-v="加工課：過剰検査によるOK品" tabindex="-1">加工課：過剰検査OK品<span class="k">キー 2</span></button>
+        </div>
+      </div>
+      <label for="k-date">記入日<span class="req">必須</span></label>
+      <div class="fld">
+        <div class="row">
+          <button class="sbtn" type="button" id="k-prev" tabindex="-1">◀ 前日</button>
+          <input type="text" id="k-date" data-kb data-pad autocomplete="off">
+          <button class="sbtn" type="button" id="k-today" tabindex="-1">今日</button>
+        </div>
+      </div>
+      <label for="k-hinban">品番<span class="req">必須</span></label>
+      <div class="fld">
+        <input type="text" id="k-hinban" data-kb autocomplete="off" placeholder="下のボタンから選ぶ（ないときはここに入力）">
+        <div class="info" id="i-khinban"></div>
+        <div class="chips hin" id="c-khinban"></div>
+      </div>
+      <label>数量<span class="req">必須</span></label>
+      <div class="fld">
+        <div class="row qty-row">
+          <input type="text" id="k-qty" data-kb data-num data-pad autocomplete="off" placeholder="数">
+          <span class="muted" id="i-kqty"></span>
+        </div>
+        <div class="chips" id="c-kqty"></div>
+      </div>
+      <label for="k-worker">作業者<span class="req">必須</span></label>
+      <div class="fld">
+        <input type="text" id="k-worker" data-kb autocomplete="off" placeholder="見逃した人／過剰に検査した人（ボタンにないときはここに入力）">
+        <div class="chips" id="c-kworker"></div>
+      </div>
+      <label>教育済み</label>
+      <div class="fld">
+        <div class="seg" id="g-kkyoiku" data-f="kkyoiku" tabindex="0">
+          <button type="button" data-v="済" tabindex="-1">✓ 教育済み<span class="k">キー 1</span></button>
+          <button type="button" data-v="まだ" tabindex="-1">まだ<span class="k">キー 2</span></button>
+        </div>
+      </div>
+      <label for="k-biko">備考</label>
+      <div class="fld"><input type="text" id="k-biko" data-kb autocomplete="off" placeholder="なくてもよい"></div>
+    </div>
+    <div class="actions">
+      <button class="big" id="k-save">保存</button>
+      <button class="big sub" id="k-clear" tabindex="-1">入力を消す</button>
+      <button class="big danger hidden" id="k-del" tabindex="-1">削除</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="filters">
+      <select id="k-month"></select>
+      <button class="sbtn" id="k-excel">この月をExcel保存</button>
+    </div>
+    <div class="kpis" id="k-kpis"></div>
+    <h3>鋳造課：見逃し品</h3>
+    <div class="tblwrap"><table id="k-t1"></table></div>
+    <h3>加工課：過剰検査によるOK品</h3>
+    <div class="tblwrap"><table id="k-t2"></table></div>
+    <div class="grid2">
+      <div><h3>作業者別</h3><div class="tblwrap"><table id="k-tw"></table></div></div>
+      <div><h3>品番別</h3><div class="tblwrap"><table id="k-th"></table></div></div>
+    </div>
   </div>
 </section>
 
@@ -397,7 +480,7 @@ tr.sel td{background:#fff7e0}
 <script>
 (function(){
 "use strict";
-var APP_VER = "kakoubata-v6";
+var APP_VER = "kakoubata-v9";
 var CFG = window.APP_CONFIG || {};
 var PHOTOS = window.BUI_PHOTOS || {};
 var VIEW = /[?&]view\b/.test(location.search);
@@ -432,7 +515,7 @@ function idbSet(k, v){
   if (!idb) { try{ localStorage.setItem("kb_" + k, JSON.stringify(v)); }catch(e){ toast("端末に保存できませんでした"); } return; }
   try{ idb.transaction("kv", "readwrite").objectStore("kv").put(v, k); }catch(e){ toast("端末に保存できませんでした"); }
 }
-var EMPTY = function(){ return {recs: {}, lots: {}, out: [], lotOut: [], confs: {}, confOut: [], master: {hinban: [], furyo: [], bui: [], at: {}}, since: "", lastSync: ""}; };
+var EMPTY = function(){ return {recs: {}, lots: {}, out: [], lotOut: [], confs: {}, confOut: [], chks: {}, chkOut: [], chkSeeded: false, master: {hinban: [], furyo: [], bui: [], at: {}}, since: "", lastSync: ""}; };
 var DB = EMPTY();
 var saveT = null;
 var recVer = 0;
@@ -570,13 +653,14 @@ var curTab = VIEW ? "rate" : "input";
 function showTab(t){
   curTab = t;
   document.querySelectorAll("#tabs button").forEach(function(b){ b.classList.toggle("on", b.dataset.tab === t); });
-  ["input","rate","list","sum","set"].forEach(function(n){ $("tab-" + n).classList.toggle("hidden", n !== t); });
+  ["input","rate","chk","list","sum","set"].forEach(function(n){ $("tab-" + n).classList.toggle("hidden", n !== t); });
   render();
   if (t === "input" && isKb()) setTimeout(function(){ $("f-hinban").focus(); }, 50);
 }
 function render(){
   if (curTab === "input") { renderDay(); renderHinbanChips(); }
   else if (curTab === "rate") { renderHinbanChips(); renderRate(); }
+  else if (curTab === "chk") renderChk();
   else if (curTab === "list") renderList();
   else if (curTab === "sum") renderSum();
   else if (curTab === "set") renderSet();
@@ -586,7 +670,7 @@ document.querySelectorAll("#tabs button").forEach(function(b){ b.onclick = funct
 // ---------------------------------------------------------------- 入力フォーム
 var F = { men: "", jotai: "" };
 var editId = null, menAuto = false;
-var ORDER = ["f-date","f-hinban","f-naiyo","f-bui","g-men","g-jotai","f-lot","f-qty","f-biko","btnSave"];
+var ORDER = ["f-date","f-hinban","f-naiyo","f-bui","g-men","g-jotai","f-kata","f-lot","f-qty","f-biko","btnSave"];
 
 function isKb(){ return pget(PREF.kb, false); } // false＝選択式（タッチ）、true＝外付けキーボード
 function applyKeyboardMode(){
@@ -637,13 +721,42 @@ function setSeg(f, v, auto){
   F[f] = v;
   document.querySelectorAll("#g-" + f + " button").forEach(function(b){ b.classList.toggle("on", b.dataset.v === v); });
   if (f === "men") { menAuto = !!auto; if (!auto) $("i-men").textContent = ""; }
+  if (f === "jotai") showKata();
   updKingaku();
+}
+// ---- 型番（状態が未加工のときだけ）
+function showKata(){
+  var on = F.jotai === "未加工";
+  document.querySelectorAll(".kata-row").forEach(function(el){ el.classList.toggle("hidden", !on); });
+  if (!on) $("f-kata").value = "";
+  else renderKataChips();
+}
+function kataStats(h){ // これまでの記録の型番（Excelでは部位の頭の数字。例「4外周」の4）とアプリの型番
+  h = H(h); var c = {};
+  allRecs().forEach(function(r){
+    if (H(r.hinban) !== h) return;
+    var k = r.kataban || (r.h && r.jotai === "未加工" ? (hank(r.bui || "").match(/^([0-9]+)/) || [])[1] : "");
+    if (k) c[k] = (c[k] || 0) + (r.h ? 1 : 5);
+  });
+  return c;
+}
+function renderKataChips(){
+  var c = kataStats($("f-hinban").value);
+  var a = Object.keys(c).filter(function(k){ return c[k] >= 3; }).sort(function(x, y){ return Number(x) - Number(y) || (x < y ? -1 : 1); });
+  if (!a.length) a = ["1", "2", "3", "4", "5", "6"];
+  a.push("不明");
+  chipBtns($("c-kata"), a, "", function(v){ $("f-kata").value = v; renderKataChips(); next("f-kata"); }, $("f-kata").value.trim());
+  var b = document.createElement("button"); b.type = "button"; b.tabIndex = -1; b.className = "chip more"; b.textContent = "ほかの型番（数字で入れる）";
+  b.onclick = function(){ keypad("型番", "", {max: 3}).then(function(v){ if (v == null || v === "") return; $("f-kata").value = v; renderKataChips(); next("f-kata"); }); };
+  $("c-kata").appendChild(b);
+  $("i-kata").textContent = Object.keys(c).length ? "これまでの記録にある型番を表示しています" : "";
 }
 document.querySelectorAll(".seg button").forEach(function(b){
   b.onclick = function(){ var g = b.parentNode; setSeg(g.dataset.f, b.dataset.v); next(g.id); };
 });
 function next(id){
   var i = ORDER.indexOf(id);
+  if (ORDER[i + 1] === "f-kata" && F.jotai !== "未加工") i++; // 未加工でなければ型番はとばす
   var el = $(ORDER[Math.min(i + 1, ORDER.length - 1)]);
   if (el && !isKb()) { // 選択式：画面のキーボードが出ないよう、次の項目を見えるところに動かすだけ
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -663,16 +776,29 @@ function next(id){
 });
 
 // --- 候補
-function naiyoCounts(h){
-  var c = {}; h = H(h);
-  (DB.master.furyo || []).forEach(function(f){ c[f.name] = (c[f.name] || 0) + Number(f.count || 0) / 1000; });
-  allRecs().forEach(function(r){ c[r.naiyo] = (c[r.naiyo] || 0) + (H(r.hinban) === h ? 5 : 1); });
+// 選択欄に出さない不良内容（2026-10-28 品質の依頼）。記録には残っていて、集計・一覧では見られる
+var HIDE_NAIYO = ["ショット過剰", "廃却", "ショット甘い", "もどき", "ぴ", "めくれ", "肉薄", "イコブ", "圧痕", "摩耗", "形状不完全", "素材異常", "堰付き", "砂", "摩耗残り", "素材加工不良", "錆", "鋳肌荒れ", "粗目", "4駄肉", "3打痕", "6砂カミ"];
+// かならず選択欄に出す不良内容
+var MUST_NAIYO = ["ピンホール"];
+function naiyoCounts(h){ // 選択欄の不良内容：マスター＋アプリで入れたもの（Excelの過去の記録は品番ごとの並び順にだけ使う）
+  var c = {}, hist = {}; h = H(h);
+  (DB.master.furyo || []).forEach(function(f){ c[f.name] = (c[f.name] || 0) + Number(f.count || 0) / 100000; });
+  MUST_NAIYO.forEach(function(n){ if (!(n in c)) c[n] = 0.001; });
+  allRecs().forEach(function(r){
+    if (!r.naiyo) return;
+    if (r.h) { if (H(r.hinban) === h) hist[r.naiyo] = (hist[r.naiyo] || 0) + 1; return; }
+    c[r.naiyo] = (c[r.naiyo] || 0) + (H(r.hinban) === h ? 50 : 1);
+  });
+  Object.keys(hist).forEach(function(n){ if (n in c) c[n] += hist[n] / 100; });
+  HIDE_NAIYO.forEach(function(n){ delete c[n]; });
   return c;
 }
 function buiStats(h){ // 部位 → {n, ka, so}
   h = H(h); var o = {};
   (DB.master.bui || []).forEach(function(b){ if (H(b.hinban) !== h) return; var x = o[b.bui] = o[b.bui] || {n: 0, ka: 0, so: 0}; x.ka += Number(b.ka || 0); x.so += Number(b.so || 0); x.n += Number(b.ka || 0) + Number(b.so || 0); });
   allRecs().forEach(function(r){ if (H(r.hinban) !== h || !r.bui) return; var x = o[r.bui] = o[r.bui] || {n: 0, ka: 0, so: 0}; x.n += 3; if (r.men === "加工面") x.ka += 3; else if (r.men === "素材面") x.so += 3; });
+  // 数字が入っている部位（例「4外周」「3イマド」。昔は型番を部位に書いていた）は選択欄に出さない（2026-10-28 依頼）
+  Object.keys(o).forEach(function(k){ if (/[0-9０-９]/.test(k)) delete o[k]; });
   return o;
 }
 function sortedKeys(o, f){ return Object.keys(o).filter(Boolean).sort(function(a, b){ return f(o[b]) - f(o[a]); }); }
@@ -750,7 +876,7 @@ function onHinban(typing){
   if (!v) info.textContent = "";
   else if (m) info.textContent = [m.seiki, m.kubun].filter(Boolean).join("　");
   else if (!typing) { info.textContent = "マスターにない品番です（このまま保存できます）"; info.classList.add("warn"); }
-  renderHinbanChips(); renderNaiyoChips(); renderBuiChips(); renderLotChips(); updKingaku();
+  renderHinbanChips(); renderNaiyoChips(); renderBuiChips(); renderLotChips(); if (F.jotai === "未加工") renderKataChips(); updKingaku();
 }
 function onBui(){
   var b = $("f-bui").value.trim(); if (!b || editId) return;
@@ -788,7 +914,7 @@ function renderHinbanChips(){
 }
 function renderNaiyoChips(){
   var c = naiyoCounts($("f-hinban").value);
-  chipBtns($("c-naiyo"), sortedKeys(c, function(x){ return x; }), "", function(v){ pick("naiyo", v); renderNaiyoChips(); next("f-naiyo"); }, $("f-naiyo").value.trim(), 16, "naiyo");
+  chipBtns($("c-naiyo"), sortedKeys(c, function(x){ return x; }), "", function(v){ pick("naiyo", v); renderNaiyoChips(); next("f-naiyo"); }, $("f-naiyo").value.trim());
 }
 function renderBuiChips(){
   var h = $("f-hinban").value, s = buiStats(h), a = sortedKeys(s, function(x){ return x.n; });
@@ -816,7 +942,7 @@ function photoPicker(zu){
 }
 function renderLotChips(){
   var td = today(); // 先の日付になるロット（打ち間違い）はボタンに出さない
-  var lots = lotsOfHinban($("f-hinban").value).filter(function(r){ return !r.date || r.date <= td; }).slice(0, 8).map(function(r){ return {v: r.lot, sub: r.date ? r.date.slice(5) : ""}; });
+  var lots = lotsOfHinban($("f-hinban").value).filter(function(r){ return r.date && r.date <= td; }) /* 日付として読めないロット（例 269022）も出さない */.slice(0, 8).map(function(r){ return {v: r.lot, sub: r.date ? r.date.slice(5) : ""}; });
   chipBtns($("c-lot"), lots, "lot", function(v){ $("f-lot").value = v; onLot(); renderLotChips(); next("f-lot"); }, $("f-lot").value.trim());
   var b = document.createElement("button"); b.type = "button"; b.tabIndex = -1; b.className = "chip more"; b.textContent = "ほかのロット（数字で入れる）";
   b.onclick = function(){ keypad("鋳造ロット", "", {max: 6, hint: "6けた（例 261014）"}).then(function(v){ if (v == null) return; $("f-lot").value = v; onLot(); renderLotChips(); next("f-lot"); }); };
@@ -863,6 +989,8 @@ $("f-qty").addEventListener("keydown", function(e){
 $("qPlus").onclick = function(){ $("f-qty").value = (+$("f-qty").value || 0) + 1; updKingaku(); renderQtyChips(); };
 $("qMinus").onclick = function(){ $("f-qty").value = Math.max(1, (+$("f-qty").value || 0) - 1); updKingaku(); renderQtyChips(); };
 bindPad("f-qty", "数量", {max: 4}, function(){ normQty($("f-qty")); updKingaku(); renderQtyChips(); next("f-qty"); });
+bindPad("f-kata", "型番", {max: 3}, function(){ renderKataChips(); next("f-kata"); });
+$("f-kata").addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); this.value = hank(this.value.trim()); if (!this.value) { toast("型番を入れてください（分からないときは「不明」）"); return; } next("f-kata"); } });
 bindPad("f-lot", "鋳造ロット", {max: 6, hint: "6けた（例 261014）"}, function(){ onLot(); renderLotChips(); next("f-lot"); });
 bindPad("f-date", "確認日", {max: 8, hint: "月日を4けたで（例 1022）"}, function(v){ var d = parseDate(v); if (!d) { toast("日付が読めません（例：1022）"); setDate(today()); return; } setDate(d); });
 $("f-biko").addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); next("f-biko"); } });
@@ -874,7 +1002,7 @@ $("btnDelete").onclick = function(){ if (editId) deleteRec(editId); };
 function clearForm(all){
   editId = null;
   // 品番は残す（同じ品番を続けて入れることが多いため）。「入力を消す」では品番も消す
-  var ids = ["f-naiyo","f-bui","f-lot","f-biko"];
+  var ids = ["f-naiyo","f-bui","f-lot","f-biko","f-kata"];
   if (all) ids.push("f-hinban");
   ids.forEach(function(id){ $(id).value = ""; });
   $("f-qty").value = "1"; setSeg("men", ""); setSeg("jotai", ""); renderQtyChips();
@@ -891,7 +1019,7 @@ function saveForm(){
   var user = $("user").value;
   var r = {
     date: parseDate($("f-date").value), hinban: H(hank($("f-hinban").value)), naiyo: $("f-naiyo").value.trim(), bui: $("f-bui").value.trim(),
-    men: F.men, jotai: F.jotai, lot: hank($("f-lot").value.trim()), qty: parseInt($("f-qty").value, 10) || 0, biko: $("f-biko").value.trim()
+    men: F.men, jotai: F.jotai, kataban: F.jotai === "未加工" ? hank($("f-kata").value.trim()) : "", lot: hank($("f-lot").value.trim()), qty: parseInt($("f-qty").value, 10) || 0, biko: $("f-biko").value.trim()
   };
   var miss = [];
   if (!user) miss.push(["作業者（右上）", "user"]);
@@ -901,12 +1029,13 @@ function saveForm(){
   if (!r.bui) miss.push(["部位", "f-bui"]);
   if (!r.men) miss.push(["加工面／素材面", "g-men"]);
   if (!r.jotai) miss.push(["状態", "g-jotai"]);
+  if (r.jotai === "未加工" && !r.kataban) miss.push(["型番", "f-kata"]);
   if (!r.lot) miss.push(["鋳造ロット", "f-lot"]);
   if (!(r.qty > 0)) miss.push(["数量", "f-qty"]);
   if (miss.length) { toast("入っていません：" + miss.map(function(m){ return m[0]; }).join("・"), 3000); $(miss[0][1]).focus(); return; }
 
   if (!editId) {
-    var dup = appRecs().filter(function(x){ return x.date === r.date && x.hinban === r.hinban && x.naiyo === r.naiyo && x.bui === r.bui && x.lot === r.lot && x.men === r.men && x.jotai === r.jotai; })[0];
+    var dup = appRecs().filter(function(x){ return x.date === r.date && x.hinban === r.hinban && x.naiyo === r.naiyo && x.bui === r.bui && x.lot === r.lot && x.men === r.men && x.jotai === r.jotai && (x.kataban || "") === r.kataban; })[0];
     if (dup && confirm("同じ日に同じ内容（" + r.hinban + "・" + r.naiyo + "・" + r.bui + "・ロット " + r.lot + "）が " + dup.qty + " 個あります。\n\nOK：数量を足す（" + dup.qty + "＋" + r.qty + "）\nキャンセル：別の行として登録する")) {
       editId = dup.id; r.qty = Number(dup.qty) + r.qty; if (!r.biko) r.biko = dup.biko;
     }
@@ -941,7 +1070,7 @@ function editRec(id){
   setDate(r.date);
   $("f-hinban").value = r.hinban; onHinban();
   $("f-naiyo").value = r.naiyo; $("f-bui").value = r.bui || "";
-  setSeg("men", r.men); setSeg("jotai", r.jotai);
+  setSeg("men", r.men); setSeg("jotai", r.jotai); $("f-kata").value = r.kataban || ""; if (r.jotai === "未加工") renderKataChips();
   $("f-lot").value = r.lot || ""; $("f-qty").value = r.qty; $("f-biko").value = r.biko || "";
   onLot(); updKingaku();
   $("editbar").classList.remove("hidden"); $("btnDelete").classList.remove("hidden"); $("btnSave").textContent = "修正を保存";
@@ -971,7 +1100,7 @@ function rowHtml(r, withDate){
     (withDate ? "<td>" + esc(r.date.slice(5)) + "</td>" : "") +
     "<td>" + esc(r.hinban) + "</td><td>" + esc(r.naiyo) + "</td><td>" + esc(r.bui) + "</td>" +
     '<td class="c">' + (r.men === "加工面" ? '<span class="tag ka">○</span>' : "") + '</td><td class="c">' + (r.men === "素材面" ? '<span class="tag so">○</span>' : "") + "</td>" +
-    '<td class="c">' + (r.jotai === "未加工" ? "○" : "") + '</td><td class="c">' + (r.jotai === "半ペタ" ? "○" : "") + '</td><td class="c">' + (r.jotai === "完成" ? "○" : "") + "</td>" +
+    '<td class="c">' + (r.jotai === "未加工" ? "○" + (r.kataban ? '<small class="muted"> 型' + esc(r.kataban) + "</small>" : "") : "") + '</td><td class="c">' + (r.jotai === "半ペタ" ? "○" : "") + '</td><td class="c">' + (r.jotai === "完成" ? "○" : "") + "</td>" +
     "<td>" + esc(r.lot) + '</td><td class="r">' + esc(r.qty) + "</td><td>" + esc(r.user) + "</td><td>" + esc(r.biko) + "</td>" +
     "<td>" + (r.h ? '<span class="tag">Excel</span>' : DB.out.indexOf(r.id) >= 0 ? '<span class="tag wait">未送信</span>' : "") + "</td></tr>";
 }
@@ -1407,15 +1536,15 @@ function buildExcel(list, from, to, label){
     var m = findHinban(h);
     ws.getCell("A1").value = m ? m.seiki : h; ws.getCell("A1").font = {bold: true, size: 12};
     var hr = ws.getRow(2);
-    ["確認日", "不良内容", "部位", "加工面", "素材面", "状態", "鋳造ロット", "数量", "作業者"].forEach(function(t, i){ var c = hr.getCell(i + 1); c.value = t; c.font = {bold: true}; c.fill = GRAY; c.border = box; c.alignment = {horizontal: "center"}; });
+    ["確認日", "不良内容", "部位", "加工面", "素材面", "状態", "鋳造ロット", "数量", "作業者", "型番"].forEach(function(t, i){ var c = hr.getCell(i + 1); c.value = t; c.font = {bold: true}; c.fill = GRAY; c.border = box; c.alignment = {horizontal: "center"}; });
     byH[h].forEach(function(r, i){
       var row = ws.getRow(3 + i);
-      [xlDate(r.date), r.naiyo, r.bui, r.men === "加工面" ? "○" : null, r.men === "素材面" ? "○" : null, r.jotai, /^\d+$/.test(r.lot) ? Number(r.lot) : r.lot, Number(r.qty), r.user].forEach(function(v, j){ var c = row.getCell(j + 1); c.value = v; c.border = box; if (j >= 3 && j <= 5) c.alignment = {horizontal: "center"}; });
+      [xlDate(r.date), r.naiyo, r.bui, r.men === "加工面" ? "○" : null, r.men === "素材面" ? "○" : null, r.jotai, /^\d+$/.test(r.lot) ? Number(r.lot) : r.lot, Number(r.qty), r.user, r.kataban || null].forEach(function(v, j){ var c = row.getCell(j + 1); c.value = v; c.border = box; if ((j >= 3 && j <= 5) || j === 9) c.alignment = {horizontal: "center"}; });
       row.getCell(1).numFmt = "yyyy/m/d";
     });
-    [11, 12, 16, 7, 7, 8, 11, 6, 9].forEach(function(w, i){ ws.getColumn(i + 1).width = w; });
+    [11, 12, 16, 7, 7, 8, 11, 6, 9, 7].forEach(function(w, i){ ws.getColumn(i + 1).width = w; });
     ws.views = [{state: "frozen", ySplit: 2}];
-    ws.autoFilter = {from: "A2", to: "I2"};
+    ws.autoFilter = {from: "A2", to: "J2"};
   });
 
   // 2) 不良率（TVC向け／フコク向け／その他向け）：ロットの鋳造日で期間を絞る
@@ -1486,11 +1615,11 @@ function buildExcel(list, from, to, label){
   function finish(){
   // 4) 一覧
   var w2 = wb.addWorksheet("一覧");
-  var h2 = ["確認日", "月度", "品番", "正式品番", "区分", "不良内容", "部位", "加工面", "素材面", "状態", "鋳造ロット", "数量", "単価", "金額", "作業者", "備考", "確認者"];
+  var h2 = ["確認日", "月度", "品番", "正式品番", "区分", "不良内容", "部位", "加工面", "素材面", "状態", "型番", "鋳造ロット", "数量", "単価", "金額", "作業者", "備考", "確認者"];
   w2.addRow(h2);
-  list.forEach(function(r){ var mm = findHinban(r.hinban); w2.addRow([xlDate(r.date), r.month, r.hinban, r.seiki || (mm ? mm.seiki : ""), kubunOf(r.hinban), r.naiyo, r.bui, r.men === "加工面" ? "○" : "", r.men === "素材面" ? "○" : "", r.jotai, r.lot, Number(r.qty), r.tanka === "" ? null : r.tanka, r.kingaku === "" ? null : r.kingaku, r.user, r.biko, (DB.confs[r.date] || {}).by || ""]); });
-  [11, 11, 13, 16, 10, 11, 14, 7, 7, 7, 10, 6, 8, 10, 9, 22, 9].forEach(function(w, i){ w2.getColumn(i + 1).width = w; });
-  w2.getColumn(1).numFmt = "yyyy/m/d"; w2.getColumn(13).numFmt = "#,##0"; w2.getColumn(14).numFmt = "#,##0";
+  list.forEach(function(r){ var mm = findHinban(r.hinban); w2.addRow([xlDate(r.date), r.month, r.hinban, r.seiki || (mm ? mm.seiki : ""), kubunOf(r.hinban), r.naiyo, r.bui, r.men === "加工面" ? "○" : "", r.men === "素材面" ? "○" : "", r.jotai, r.kataban || "", r.lot, Number(r.qty), r.tanka === "" ? null : r.tanka, r.kingaku === "" ? null : r.kingaku, r.user, r.biko, (DB.confs[r.date] || {}).by || ""]); });
+  [11, 11, 13, 16, 10, 11, 14, 7, 7, 7, 6, 10, 6, 8, 10, 9, 22, 9].forEach(function(w, i){ w2.getColumn(i + 1).width = w; });
+  w2.getColumn(1).numFmt = "yyyy/m/d"; w2.getColumn(14).numFmt = "#,##0"; w2.getColumn(15).numFmt = "#,##0";
   w2.getRow(1).eachCell(function(c){ c.font = {bold: true}; c.fill = GRAY; });
   w2.views = [{state: "frozen", ySplit: 1}];
   w2.autoFilter = {from: "A1", to: {row: 1, column: h2.length}};
@@ -1501,7 +1630,7 @@ function buildExcel(list, from, to, label){
 // ---------------------------------------------------------------- 同期
 var syncing = false, lastErr = "", syncT = null;
 function badge(cls, text){ var b = $("badge"); b.className = "badge " + cls; b.textContent = text; }
-function pending(){ return DB.out.length + DB.lotOut.length + DB.confOut.length; }
+function pending(){ return DB.out.length + DB.lotOut.length + DB.confOut.length + DB.chkOut.length; }
 function renderBadge(){
   if (!CFG.syncUrl) { badge("local", "端末内のみ（同期未設定）"); return; }
   var n = pending();
@@ -1540,7 +1669,14 @@ function syncNow(manual, full){
       if (DB.lotOut.length && j.saved.length) return sendLots();
     });
   }
-  var p = Promise.resolve().then(sendRecs).then(sendLots);
+  function sendChks(){
+    var ids = DB.chkOut.slice(0, 200); if (!ids.length) return Promise.resolve();
+    return post({action: "chk", chks: ids.map(function(id){ return DB.chks[id]; }).filter(Boolean)}).then(function(j){
+      DB.chkOut = DB.chkOut.filter(function(id){ return j.saved.indexOf(id) < 0 && DB.chks[id]; }); persist();
+      if (DB.chkOut.length && j.saved.length) return sendChks();
+    });
+  }
+  var p = Promise.resolve().then(sendRecs).then(sendLots).then(sendChks);
   DB.confOut.slice().forEach(function(d){ p = p.then(function(){ return post({action: "confirm", confirm: DB.confs[d]}).then(function(){ DB.confOut = DB.confOut.filter(function(x){ return x !== d; }); persist(); }); }); });
   p = p.then(function(){
     var since = full ? "" : (DB.since || "");
@@ -1554,8 +1690,11 @@ function syncNow(manual, full){
       Object.keys(DB.recs).forEach(function(id){ if (!seen[id] && !pr[id]) delete DB.recs[id]; });
       var seenL = {}; (j.lots || []).forEach(function(l){ seenL[l.id] = 1; });
       Object.keys(DB.lots).forEach(function(id){ if (!seenL[id] && !pl[id]) delete DB.lots[id]; });
+      if (j.chks) { var seenK = {}, pk0 = {}; DB.chkOut.forEach(function(id){ pk0[id] = 1; }); j.chks.forEach(function(k){ seenK[k.id] = 1; }); Object.keys(DB.chks).forEach(function(id){ if (!seenK[id] && !pk0[id]) delete DB.chks[id]; }); }
     }
     (j.records || []).forEach(function(r){ if (pr[r.id]) return; var c = DB.recs[r.id]; if (!c || (r.updatedAt || "") >= (c.updatedAt || "")) DB.recs[r.id] = r; });
+    var pk = {}; DB.chkOut.forEach(function(id){ pk[id] = 1; });
+    (j.chks || []).forEach(function(k){ if (pk[k.id]) return; var c = DB.chks[k.id]; if (!c || (k.updatedAt || "") >= (c.updatedAt || "")) DB.chks[k.id] = k; });
     (j.lots || []).forEach(function(l){ if (pl[l.id]) return; var c = DB.lots[l.id]; if (!c || (l.updatedAt || "") >= (c.updatedAt || "")) DB.lots[l.id] = l; });
     var m = j.master || {};
     ["hinban", "furyo", "bui"].forEach(function(k){ if (m[k] && m[k].updatedAt !== DB.master.at[k]) { DB.master[k] = m[k].data || []; DB.master.at[k] = m[k].updatedAt; } });
@@ -1584,11 +1723,187 @@ setInterval(function(){ if (document.visibilityState === "visible") syncNow(); }
 document.addEventListener("visibilitychange", function(){ if (document.visibilityState === "visible") syncNow(); });
 
 // ---------------------------------------------------------------- はじめに
+// ================================================================ 見逃し・過剰検査（加工畑不良確認）
+var KUBUN_K = ["鋳造課：見逃し品", "加工課：過剰検査によるOK品"];
+// 2026年10月の紙の記録（はじめて開いたときに1回だけ入れる。IDが決まっているので何台で入れても1件になる）
+var CHK_SEED = [{"id":"k2610c01","kubun":"鋳造課：見逃し品","date":"2026/10/01","hinban":"RD2287B-H","qty":1,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c02","kubun":"鋳造課：見逃し品","date":"2026/10/01","hinban":"RD2287B-H","qty":1,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c03","kubun":"鋳造課：見逃し品","date":"2026/10/01","hinban":"RD2364A-H","qty":7,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c04","kubun":"鋳造課：見逃し品","date":"2026/10/01","hinban":"RD2287B-H","qty":7,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c05","kubun":"鋳造課：見逃し品","date":"2026/10/02","hinban":"RD2364A-H","qty":0,"many":true,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c06","kubun":"鋳造課：見逃し品","date":"2026/10/02","hinban":"RD2364A-H","qty":1,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c07","kubun":"鋳造課：見逃し品","date":"2026/10/05","hinban":"RD2287B-H","qty":0,"many":true,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c08","kubun":"鋳造課：見逃し品","date":"2026/10/05","hinban":"RD2287B-H","qty":2,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c09","kubun":"鋳造課：見逃し品","date":"2026/10/05","hinban":"RD2287B-H","qty":7,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c10","kubun":"鋳造課：見逃し品","date":"2026/10/06","hinban":"RD2287B-H","qty":9,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c11","kubun":"鋳造課：見逃し品","date":"2026/10/07","hinban":"RD2364A-H","qty":0,"many":true,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c12","kubun":"鋳造課：見逃し品","date":"2026/10/08","hinban":"RD2287B-H","qty":3,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c13","kubun":"鋳造課：見逃し品","date":"2026/10/08","hinban":"RD2364A-H","qty":0,"many":true,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c14","kubun":"鋳造課：見逃し品","date":"2026/10/09","hinban":"RD2364A-H","qty":1,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c15","kubun":"鋳造課：見逃し品","date":"2026/10/09","hinban":"RD2287B-H","qty":1,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c16","kubun":"鋳造課：見逃し品","date":"2026/10/12","hinban":"RD2287B-H","qty":0,"many":true,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c17","kubun":"鋳造課：見逃し品","date":"2026/10/13","hinban":"RD2287B-H","qty":8,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c18","kubun":"鋳造課：見逃し品","date":"2026/10/13","hinban":"RD2364A-H","qty":0,"many":true,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c19","kubun":"鋳造課：見逃し品","date":"2026/10/14","hinban":"RD2287B-H","qty":9,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c20","kubun":"鋳造課：見逃し品","date":"2026/10/14","hinban":"RD2364A-H","qty":0,"many":true,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c21","kubun":"鋳造課：見逃し品","date":"2026/10/15","hinban":"RD2364A-H","qty":7,"many":false,"worker":"フェル","kyoiku":true,"biko":""},{"id":"k2610c22","kubun":"鋳造課：見逃し品","date":"2026/10/15","hinban":"RD2364A-H","qty":0,"many":true,"worker":"フェル","kyoiku":true,"biko":""},{"id":"k2610c23","kubun":"鋳造課：見逃し品","date":"2026/10/16","hinban":"RD2287B-H","qty":4,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c24","kubun":"鋳造課：見逃し品","date":"2026/10/16","hinban":"RD2364A-H","qty":0,"many":true,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c25","kubun":"鋳造課：見逃し品","date":"2026/10/19","hinban":"RD2287B-H","qty":1,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c26","kubun":"鋳造課：見逃し品","date":"2026/10/19","hinban":"RD2364A-H","qty":0,"many":true,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c27","kubun":"鋳造課：見逃し品","date":"2026/10/19","hinban":"RD2287B-H","qty":6,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c28","kubun":"鋳造課：見逃し品","date":"2026/10/20","hinban":"RD2287B-H","qty":0,"many":true,"worker":"フェル","kyoiku":true,"biko":""},{"id":"k2610c29","kubun":"鋳造課：見逃し品","date":"2026/10/20","hinban":"RD2287B-H","qty":6,"many":false,"worker":"ウラン","kyoiku":true,"biko":""},{"id":"k2610c30","kubun":"鋳造課：見逃し品","date":"2026/10/21","hinban":"RD2364A-H","qty":0,"many":true,"worker":"フェル","kyoiku":true,"biko":""},{"id":"k2610c31","kubun":"鋳造課：見逃し品","date":"2026/10/21","hinban":"RD2287B-H","qty":9,"many":false,"worker":"フェル","kyoiku":true,"biko":""},{"id":"k2610c32","kubun":"鋳造課：見逃し品","date":"2026/10/22","hinban":"RD2364A-H","qty":0,"many":true,"worker":"フェル","kyoiku":true,"biko":""},{"id":"k2610c33","kubun":"鋳造課：見逃し品","date":"2026/10/22","hinban":"RD2287B-H","qty":2,"many":false,"worker":"フェル","kyoiku":true,"biko":""},{"id":"k2610c34","kubun":"鋳造課：見逃し品","date":"2026/10/26","hinban":"RD2287B-H","qty":5,"many":false,"worker":"フェル","kyoiku":true,"biko":"記入日 10/23〜26"},{"id":"k2610c35","kubun":"鋳造課：見逃し品","date":"2026/10/26","hinban":"RD2364A-H","qty":0,"many":true,"worker":"フェル","kyoiku":true,"biko":""},{"id":"k2610k01","kubun":"加工課：過剰検査によるOK品","date":"2026/10/01","hinban":"RD2287B-H","qty":1,"many":false,"worker":"ウィスヌ","kyoiku":true,"biko":""},{"id":"k2610k02","kubun":"加工課：過剰検査によるOK品","date":"2026/10/02","hinban":"RD2245B-R","qty":2,"many":false,"worker":"トリヴァ","kyoiku":true,"biko":""},{"id":"k2610k03","kubun":"加工課：過剰検査によるOK品","date":"2026/10/02","hinban":"RD2364A-H","qty":1,"many":false,"worker":"ディア","kyoiku":true,"biko":""},{"id":"k2610k04","kubun":"加工課：過剰検査によるOK品","date":"2026/10/05","hinban":"VA4","qty":1,"many":false,"worker":"フェル","kyoiku":true,"biko":""},{"id":"k2610k05","kubun":"加工課：過剰検査によるOK品","date":"2026/10/05","hinban":"RD2364A-H","qty":1,"many":false,"worker":"ミカ","kyoiku":true,"biko":""},{"id":"k2610k06","kubun":"加工課：過剰検査によるOK品","date":"2026/10/05","hinban":"RD2364A-R","qty":1,"many":false,"worker":"プトラ","kyoiku":true,"biko":""},{"id":"k2610k07","kubun":"加工課：過剰検査によるOK品","date":"2026/10/06","hinban":"RD2245B-R","qty":1,"many":false,"worker":"トリヴァ","kyoiku":true,"biko":""},{"id":"k2610k08","kubun":"加工課：過剰検査によるOK品","date":"2026/10/07","hinban":"VA4","qty":1,"many":false,"worker":"フェル","kyoiku":true,"biko":""},{"id":"k2610k09","kubun":"加工課：過剰検査によるOK品","date":"2026/10/07","hinban":"RD2379B-R","qty":1,"many":false,"worker":"プトラ","kyoiku":true,"biko":""},{"id":"k2610k10","kubun":"加工課：過剰検査によるOK品","date":"2026/10/08","hinban":"RD4029A-R1","qty":4,"many":false,"worker":"プトラ","kyoiku":false,"biko":""},{"id":"k2610k11","kubun":"加工課：過剰検査によるOK品","date":"2026/10/08","hinban":"RD2245B-R","qty":2,"many":false,"worker":"トリヴァ","kyoiku":true,"biko":""},{"id":"k2610k12","kubun":"加工課：過剰検査によるOK品","date":"2026/10/08","hinban":"RD2364A-H","qty":1,"many":false,"worker":"ディア","kyoiku":true,"biko":""},{"id":"k2610k13","kubun":"加工課：過剰検査によるOK品","date":"2026/10/09","hinban":"RD2364A-R","qty":2,"many":false,"worker":"ヘリー","kyoiku":true,"biko":""},{"id":"k2610k14","kubun":"加工課：過剰検査によるOK品","date":"2026/10/09","hinban":"RD2364A-H","qty":1,"many":false,"worker":"ディア","kyoiku":true,"biko":""},{"id":"k2610k15","kubun":"加工課：過剰検査によるOK品","date":"2026/10/15","hinban":"RD2364A-H","qty":1,"many":false,"worker":"ディア","kyoiku":true,"biko":""},{"id":"k2610k16","kubun":"加工課：過剰検査によるOK品","date":"2026/10/15","hinban":"","qty":1,"many":false,"worker":"ミカ","kyoiku":true,"biko":""},{"id":"k2610k17","kubun":"加工課：過剰検査によるOK品","date":"2026/10/20","hinban":"RD2364A-H","qty":2,"many":false,"worker":"ディア","kyoiku":true,"biko":""},{"id":"k2610k18","kubun":"加工課：過剰検査によるOK品","date":"2026/10/21","hinban":"RD2364A-H","qty":1,"many":false,"worker":"ミカ","kyoiku":true,"biko":""},{"id":"k2610k19","kubun":"加工課：過剰検査によるOK品","date":"2026/10/21","hinban":"RD2364A-R","qty":1,"many":false,"worker":"ヘリー","kyoiku":true,"biko":""},{"id":"k2610k20","kubun":"加工課：過剰検査によるOK品","date":"2026/10/22","hinban":"RD2364A-H","qty":1,"many":false,"worker":"ヘリー","kyoiku":true,"biko":""}];
+function seedChks(){
+  if (DB.chkSeeded) return;
+  CHK_SEED.forEach(function(k){
+    if (DB.chks[k.id]) return;
+    DB.chks[k.id] = Object.assign({}, k, {user: "紙から", createdAt: "2026-10-27T00:00:00.000Z", updatedAt: "2026-10-27T00:00:00.000Z", deleted: false});
+    if (DB.chkOut.indexOf(k.id) < 0) DB.chkOut.push(k.id);
+  });
+  DB.chkSeeded = true; persist();
+}
+var K = {kkubun: "", kkyoiku: "済", many: false}, kEdit = null;
+function calMonth(ds){ return ds.slice(0, 7); } // この表は暦の月（10/1〜10/31）
+function chkList(includeDel){ return Object.keys(DB.chks).map(function(k){ return DB.chks[k]; }).filter(function(k){ return includeDel || !k.deleted; }).sort(function(a, b){ return a.date === b.date ? (a.createdAt < b.createdAt ? -1 : 1) : (a.date < b.date ? -1 : 1); }); }
+function qtyText(k){ return k.many ? "多" + (k.qty ? "（約" + k.qty + "）" : "") : String(k.qty); }
+function setK(f, v){
+  K[f] = v;
+  document.querySelectorAll("#g-" + f + " button").forEach(function(b){ b.classList.toggle("on", b.dataset.v === v); });
+  if (f === "kkubun") renderChkChips();
+}
+document.querySelectorAll("#g-kkubun button, #g-kkyoiku button").forEach(function(b){ b.onclick = function(){ setK(b.parentNode.dataset.f, b.dataset.v); }; });
+["kkubun", "kkyoiku"].forEach(function(f){
+  $("g-" + f).addEventListener("keydown", function(e){ var n = parseInt(hank(e.key), 10); var vals = f === "kkubun" ? KUBUN_K : ["済", "まだ"]; if (n >= 1 && n <= 2) { e.preventDefault(); setK(f, vals[n - 1]); } });
+});
+function setKDate(ds){ $("k-date").value = ds; }
+$("k-prev").onclick = function(){ var d = toDate(parseDate($("k-date").value) || today()); d.setDate(d.getDate() - 1); setKDate(fmtD(d)); };
+$("k-today").onclick = function(){ setKDate(today()); };
+bindPad("k-date", "記入日", {max: 8, hint: "月日を4けたで（例 1028）"}, function(v){ var d = parseDate(v); setKDate(d || today()); if (!d) toast("日付が読めません（例：1028）"); });
+$("k-date").addEventListener("blur", function(){ var d = parseDate(this.value); if (d) setKDate(d); });
+function setKQty(v, many){ K.many = !!many; $("k-qty").value = v === "" || v == null ? "" : String(v); $("i-kqty").textContent = many ? "多（おおよその数 " + (v || "?") + "）" : ""; renderKQtyChips(); }
+function askMany(){
+  keypad("「多」のおおよその数", "", {max: 5, hint: "だいたいの個数を入れてください"}).then(function(v){ if (v == null) return; var n = parseInt(v, 10); if (!(n > 0)) { toast("おおよその数を入れてください"); return; } setKQty(n, true); });
+}
+function renderKQtyChips(){
+  var cur = K.many ? "多" : String($("k-qty").value);
+  chipBtns($("c-kqty"), ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "多"], "", function(v){ if (v === "多") askMany(); else setKQty(v, false); }, cur);
+}
+bindPad("k-qty", "数量", {max: 5}, function(v){ setKQty(parseInt(v, 10) || "", false); });
+$("k-qty").addEventListener("input", function(){ normQty(this); K.many = false; $("i-kqty").textContent = ""; });
+function renderChkChips(){
+  var kb = K.kkubun, all = chkList(), c = {}, w = {};
+  all.forEach(function(k){ var wt = k.kubun === kb ? 1000 : 1; /* 選んだ区分の人・品番を先に */ if (k.hinban) c[k.hinban] = (c[k.hinban] || 0) + wt; if (k.worker) w[k.worker] = (w[k.worker] || 0) + wt; });
+  var hs = sortedKeys(c, function(x){ return x; });
+  activeHinban().list.forEach(function(it){ if (hs.length < 10 && hs.indexOf(it.v) < 0) hs.push(it.v); });
+  chipBtns($("c-khinban"), hs.map(function(h){ var m = findHinban(h); return {v: h, sub: m && m.seiki !== h ? m.seiki : ""}; }), "", function(v){ $("k-hinban").value = v; renderChkChips(); khInfo(); }, H($("k-hinban").value), 12, "khinban");
+  chipBtns($("c-kworker"), sortedKeys(w, function(x){ return x; }), "", function(v){ $("k-worker").value = v; renderChkChips(); }, $("k-worker").value.trim());
+}
+function khInfo(){ var m = findHinban($("k-hinban").value); $("i-khinban").textContent = m ? [m.seiki, m.kubun].join("　") : ""; }
+$("k-hinban").addEventListener("change", function(){ var v = H(hank(this.value)); var s = hinbanSug(v); this.value = findHinban(v) || s.length !== 1 ? v : s[0].v; khInfo(); renderChkChips(); });
+$("k-worker").addEventListener("change", renderChkChips);
+function clearChk(){
+  kEdit = null;
+  ["k-hinban", "k-worker", "k-biko"].forEach(function(id){ $(id).value = ""; });
+  setKQty("", false); setK("kkyoiku", "済"); $("i-khinban").textContent = "";
+  $("k-editbar").classList.add("hidden"); $("k-del").classList.add("hidden"); $("k-save").textContent = "保存";
+  if (!parseDate($("k-date").value)) setKDate(today());
+  renderChkChips();
+}
+$("k-clear").onclick = clearChk; $("k-cancel").onclick = clearChk;
+$("k-save").onclick = function(){
+  var r = {kubun: K.kkubun, date: parseDate($("k-date").value), hinban: H(hank($("k-hinban").value)), qty: parseInt($("k-qty").value, 10) || 0, many: K.many, worker: $("k-worker").value.trim(), kyoiku: K.kkyoiku === "済", biko: $("k-biko").value.trim()};
+  var miss = [];
+  if (!r.kubun) miss.push("区分"); if (!r.date) miss.push("記入日"); if (!r.hinban) miss.push("品番"); if (!(r.qty > 0)) miss.push(r.many ? "おおよその数" : "数量"); if (!r.worker) miss.push("作業者");
+  if (miss.length) { toast("入っていません：" + miss.join("・"), 3000); return; }
+  var old = kEdit ? DB.chks[kEdit] : null;
+  var rec = Object.assign({}, old || {}, r);
+  rec.id = old ? old.id : "k" + uid();
+  rec.user = old && old.user ? old.user : ($("user").value || "");
+  rec.createdAt = old ? old.createdAt : nowIso();
+  rec.updatedAt = nowIso(); rec.deleted = false;
+  DB.chks[rec.id] = rec;
+  if (DB.chkOut.indexOf(rec.id) < 0) DB.chkOut.push(rec.id);
+  persist(); syncSoon();
+  toast((old ? "修正しました：" : "保存しました：") + rec.kubun.split("：")[0] + "　" + rec.hinban + "　" + qtyText(rec) + "　" + rec.worker);
+  $("k-month").value = calMonth(rec.date);
+  clearChk(); renderChk();
+};
+function editChk(id){
+  if (VIEW) return;
+  var k = DB.chks[id]; if (!k) return;
+  kEdit = id;
+  setK("kkubun", k.kubun); setKDate(k.date); $("k-hinban").value = k.hinban; khInfo();
+  setKQty(k.qty || "", k.many); $("k-worker").value = k.worker; setK("kkyoiku", k.kyoiku ? "済" : "まだ"); $("k-biko").value = k.biko || "";
+  $("k-editbar").classList.remove("hidden"); $("k-del").classList.remove("hidden"); $("k-save").textContent = "修正を保存";
+  renderChkChips();
+  window.scrollTo({top: 0, behavior: "smooth"});
+}
+$("k-del").onclick = function(){
+  if (!kEdit) return;
+  adminCheck("記録の削除").then(function(ok){ if (!ok) return; var k = DB.chks[kEdit]; k.deleted = true; k.updatedAt = nowIso(); if (DB.chkOut.indexOf(k.id) < 0) DB.chkOut.push(k.id); persist(); syncSoon(); toast("削除しました"); clearChk(); renderChk(); });
+};
+function markKyoiku(id){
+  var k = DB.chks[id]; if (!k) return;
+  k.kyoiku = true; k.updatedAt = nowIso();
+  if (DB.chkOut.indexOf(id) < 0) DB.chkOut.push(id);
+  persist(); syncSoon(); renderChk(); toast("教育済みにしました：" + k.worker);
+}
+function fillCalMonths(sel){
+  var v = sel.value, ms = {}, d = new Date();
+  for (var i = 0; i < 12; i++) { ms[d.getFullYear() + "/" + pad(d.getMonth() + 1)] = 1; d.setMonth(d.getMonth() - 1, 1); }
+  chkList().forEach(function(k){ ms[calMonth(k.date)] = 1; });
+  var keys = Object.keys(ms).sort().reverse();
+  sel.innerHTML = keys.map(function(m){ return '<option value="' + m + '">' + m.slice(0, 4) + "年" + m.slice(5) + "月</option>"; }).join("");
+  sel.value = v && ms[v] ? v : keys[0];
+}
+function kAgg(list){
+  var A = {n: list.length, qty: 0, many: 0, mada: 0};
+  list.forEach(function(k){ A.qty += Number(k.qty || 0); if (k.many) A.many++; if (!k.kyoiku) A.mada++; });
+  return A;
+}
+function renderChk(){
+  fillCalMonths($("k-month"));
+  if (!K.kkubun) setK("kkubun", KUBUN_K[0]);
+  if (!$("k-date").value) setKDate(today());
+  renderChkChips(); renderKQtyChips();
+  var mon = $("k-month").value, list = chkList().filter(function(k){ return calMonth(k.date) === mon; });
+  var L1 = list.filter(function(k){ return k.kubun === KUBUN_K[0]; }), L2 = list.filter(function(k){ return k.kubun === KUBUN_K[1]; });
+  var A1 = kAgg(L1), A2 = kAgg(L2);
+  function kpi(t, A){ return '<div class="kpi"><div class="l">' + t + '</div><div class="v">' + A.n + "<small> 件　" + num(A.qty) + "個" + (A.many ? "（多 " + A.many + "回を含む）" : "") + "</small></div>" + (A.mada ? '<div class="muted" style="color:var(--warn)">教育まだ ' + A.mada + "件</div>" : '<div class="muted">全員教育済み</div>') + "</div>"; }
+  $("k-kpis").innerHTML = kpi("鋳造課：見逃し品", A1) + kpi("加工課：過剰検査によるOK品", A2);
+  function tbl(L){
+    if (!L.length) return '<tr><td class="muted">この月の記録はありません</td></tr>';
+    var prev = "";
+    return '<tr><th>記入日</th><th>品番</th><th class="r">数量</th><th>作業者</th><th class="c">教育済み</th><th>備考</th><th>入力者</th><th></th></tr>' +
+      L.map(function(k){ var d = k.date.slice(5).replace(/^0/, "").replace("/0", "/"); var dd = d === prev ? "〃" : d; prev = d;
+        return '<tr class="click" data-id="' + esc(k.id) + '"><td>' + dd + "</td><td>" + esc(k.hinban || "（空欄）") + '</td><td class="r">' + esc(qtyText(k)) + "</td><td>" + esc(k.worker) + '</td><td class="c">' + (k.kyoiku ? "✓" : (VIEW ? "まだ" : '<button class="sbtn" data-ky="' + esc(k.id) + '">教育済みにする</button>')) + "</td><td>" + esc(k.biko || "") + "</td><td>" + esc(k.user || "") + "</td><td>" + (DB.chkOut.indexOf(k.id) >= 0 ? '<span class="tag wait">未送信</span>' : "") + "</td></tr>"; }).join("");
+  }
+  $("k-t1").innerHTML = tbl(L1); $("k-t2").innerHTML = tbl(L2);
+  ["k-t1", "k-t2"].forEach(function(id){
+    $(id).querySelectorAll("tr.click").forEach(function(tr){ tr.onclick = function(){ editChk(tr.dataset.id); }; });
+    $(id).querySelectorAll("[data-ky]").forEach(function(b){ b.onclick = function(e){ e.stopPropagation(); markKyoiku(b.dataset.ky); }; });
+  });
+  // 作業者別・品番別
+  var W = {}, Hh = {};
+  list.forEach(function(k){
+    var w = W[k.worker + "\t" + k.kubun] = W[k.worker + "\t" + k.kubun] || {n: 0, qty: 0, many: 0, mada: 0}; w.n++; w.qty += Number(k.qty || 0); if (k.many) w.many++; if (!k.kyoiku) w.mada++;
+    var h = Hh[k.hinban || "（空欄）"] = Hh[k.hinban || "（空欄）"] || {c: 0, k: 0, qc: 0, qk: 0}; if (k.kubun === KUBUN_K[0]) { h.c++; h.qc += Number(k.qty || 0); } else { h.k++; h.qk += Number(k.qty || 0); }
+  });
+  var wk = Object.keys(W).sort(function(a, b){ return W[b].n - W[a].n; });
+  $("k-tw").innerHTML = wk.length ? '<tr><th>作業者</th><th>区分</th><th class="r">件数</th><th class="r">個数</th><th class="r">多</th><th class="r">教育まだ</th></tr>' +
+    wk.map(function(x){ var p = x.split("\t"), w = W[x]; return "<tr><td><b>" + esc(p[0]) + "</b></td><td>" + esc(p[1].split("：")[0]) + '</td><td class="r">' + w.n + '</td><td class="r">' + num(w.qty) + '</td><td class="r">' + (w.many || "") + '</td><td class="r">' + (w.mada ? '<span class="tag wait">' + w.mada + "</span>" : "") + "</td></tr>"; }).join("") : '<tr><td class="muted">記録なし</td></tr>';
+  var hk = Object.keys(Hh).sort(function(a, b){ return (Hh[b].c + Hh[b].k) - (Hh[a].c + Hh[a].k); });
+  $("k-th").innerHTML = hk.length ? '<tr><th>品番</th><th class="r">見逃し 件</th><th class="r">個</th><th class="r">過剰検査 件</th><th class="r">個</th></tr>' +
+    hk.map(function(h){ var x = Hh[h]; return "<tr><td>" + esc(h) + '</td><td class="r">' + (x.c || "") + '</td><td class="r">' + (x.qc ? num(x.qc) : "") + '</td><td class="r">' + (x.k || "") + '</td><td class="r">' + (x.qk ? num(x.qk) : "") + "</td></tr>"; }).join("") : '<tr><td class="muted">記録なし</td></tr>';
+}
+$("k-month").onchange = renderChk;
+// Excel保存（紙と同じ2枚：鋳造課／加工課。「多」は数量に「多」、おおよその数は備考に）
+$("k-excel").onclick = function(){
+  var mon = $("k-month").value, list = chkList().filter(function(k){ return calMonth(k.date) === mon; });
+  loadExcel().then(function(){
+    var wb = new ExcelJS.Workbook(), thin = {style: "thin"}, box = {top: thin, bottom: thin, left: thin, right: thin};
+    var titles = {"鋳造課：見逃し品": "鋳造課：見逃し品", "加工課：過剰検査によるOK品": "加工課：過剰検査によるOK品"};
+    KUBUN_K.forEach(function(kb){
+      var L = list.filter(function(k){ return k.kubun === kb; });
+      var ws = wb.addWorksheet(kb.split("：")[0], {pageSetup: {paperSize: 9, orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0}});
+      ws.mergeCells("A1:F1");
+      ws.getCell("A1").value = titles[kb] + "　" + mon.slice(0, 4) + "年" + Number(mon.slice(5)) + "月";
+      ws.getCell("A1").font = {bold: true, size: 13};
+      var hr = ws.getRow(3);
+      ["記入日", "品番", "数量", "作業者", "教育済み", "備考"].forEach(function(t, i){ var c = hr.getCell(i + 1); c.value = t; c.font = {bold: true}; c.border = box; c.alignment = {horizontal: "center"}; c.fill = {type: "pattern", pattern: "solid", fgColor: {argb: "FFD9D9D9"}}; });
+      var prev = "";
+      L.forEach(function(k, i){
+        var d = Number(k.date.slice(5, 7)) + "/" + Number(k.date.slice(8)), row = ws.getRow(4 + i);
+        var bk = [k.many && k.qty ? "約" + k.qty + "個" : "", k.biko || ""].filter(Boolean).join("　");
+        [d === prev ? "〃" : d, k.hinban, k.many ? "多" : Number(k.qty), k.worker, k.kyoiku ? "✓" : "", bk].forEach(function(v, j){ var c = row.getCell(j + 1); c.value = v; c.border = box; c.alignment = {horizontal: j === 5 ? "left" : "center"}; });
+        prev = d;
+      });
+      [12, 14, 8, 12, 10, 24].forEach(function(w, i){ ws.getColumn(i + 1).width = w; });
+    });
+    return wb.xlsx.writeBuffer();
+  }).then(function(buf){ download(buf, "加工畑不良確認_" + mon.replace("/", "_") + ".xlsx"); toast("Excelを保存しました"); }).catch(function(e){ alert("Excel保存できませんでした：" + e.message); });
+};
+
 window.__kb = {monthOf: monthOf, parseDate: parseDate, lotRows: lotRows};
 idbOpen().then(function(){ return idbGet("db"); }).then(function(saved){
   if (saved) { var e = EMPTY(); Object.keys(e).forEach(function(k){ if (saved[k] !== undefined) e[k] = saved[k]; }); e.master = Object.assign(EMPTY().master, saved.master || {}); DB = e; }
   window.__kb.DB = function(){ return DB; };
   try { loadHistory(); } catch (e) { HIST = []; }
+  seedChks();
   var missing = [];
   if (!window.APP_CONFIG) missing.push("config.js");
   if (!window.BUI_PHOTOS) missing.push("bui.js");
