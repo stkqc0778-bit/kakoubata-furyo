@@ -480,7 +480,7 @@ tr.sel td{background:#fff7e0}
 <script>
 (function(){
 "use strict";
-var APP_VER = "kakoubata-v9";
+var APP_VER = "kakoubata-v10";
 var CFG = window.APP_CONFIG || {};
 var PHOTOS = window.BUI_PHOTOS || {};
 var VIEW = /[?&]view\b/.test(location.search);
@@ -780,9 +780,14 @@ function next(id){
 var HIDE_NAIYO = ["ショット過剰", "廃却", "ショット甘い", "もどき", "ぴ", "めくれ", "肉薄", "イコブ", "圧痕", "摩耗", "形状不完全", "素材異常", "堰付き", "砂", "摩耗残り", "素材加工不良", "錆", "鋳肌荒れ", "粗目", "4駄肉", "3打痕", "6砂カミ"];
 // かならず選択欄に出す不良内容
 var MUST_NAIYO = ["ピンホール"];
-function naiyoCounts(h){ // 選択欄の不良内容：マスター＋アプリで入れたもの（Excelの過去の記録は品番ごとの並び順にだけ使う）
+// 選択欄の不良内容：マスター＋これまでのExcelの記録で5件以上あったもの＋アプリで入れたもの − 外したもの
+// （マスターを読み込んでいない端末でも同じ選択欄になるよう、Excelの記録からも作る）
+var histNaiyoAll = null;
+function naiyoCounts(h){
   var c = {}, hist = {}; h = H(h);
-  (DB.master.furyo || []).forEach(function(f){ c[f.name] = (c[f.name] || 0) + Number(f.count || 0) / 100000; });
+  if (!histNaiyoAll) { histNaiyoAll = {}; HIST.forEach(function(r){ if (r.naiyo) histNaiyoAll[r.naiyo] = (histNaiyoAll[r.naiyo] || 0) + 1; }); }
+  Object.keys(histNaiyoAll).forEach(function(n){ if (histNaiyoAll[n] >= 5) c[n] = histNaiyoAll[n] / 100000; });
+  (DB.master.furyo || []).forEach(function(f){ c[f.name] = Math.max(c[f.name] || 0, Number(f.count || 0) / 100000); });
   MUST_NAIYO.forEach(function(n){ if (!(n in c)) c[n] = 0.001; });
   allRecs().forEach(function(r){
     if (!r.naiyo) return;
